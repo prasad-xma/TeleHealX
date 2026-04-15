@@ -81,8 +81,8 @@ const LoginPage = () => {
       }
       
       setTimeout(() => {
-        // Redirect to dashboard or home page
-        window.location.href = '/dashboard';
+        // Redirect to doctor dashboard
+        window.location.href = '/doctor/dashboard';
       }, 1000);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
