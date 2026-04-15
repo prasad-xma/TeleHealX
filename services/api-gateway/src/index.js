@@ -9,25 +9,30 @@ const app = express();
 
 app.use(cors());
 
-console.log(`AUTH_SERVICE_URL: ${process.env.AUTH_SERVICE_URL}`);
-console.log(`USER_SERVICE_URL: ${process.env.USER_SERVICE_URL}`);
+const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:5001';
+const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5002';
+const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:5004';
+
+const createServiceProxy = (target, prefix) =>
+  createProxyMiddleware({
+    target,
+    changeOrigin: true,
+    pathRewrite: (path) => `${prefix}${path}`,
+  });
 
 app.use(
   '/api/auth',
-  createProxyMiddleware({
-    target: process.env.AUTH_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: (path) => `/api/auth${path}`
-  })
+  createServiceProxy(authServiceUrl, '/api/auth')
 );
 
 app.use(
   '/api/users',
-  createProxyMiddleware({
-    target: process.env.USER_SERVICE_URL,
-    changeOrigin: true,
-    pathRewrite: (path) => `/api/users${path}`
-  })
+  createServiceProxy(userServiceUrl, '/api/users')
+);
+
+app.use(
+  '/api/ai',
+  createServiceProxy(aiServiceUrl, '/api/ai')
 );
 
 app.get('/', (req, res) => {
