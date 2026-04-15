@@ -18,6 +18,15 @@ const login = async (req, res) => {
 	}
 };
 
+const logout = async (req, res) => {
+	try {
+		const data = await authService.logout();
+		return res.status(200).json(data);
+	} catch (error) {
+		return res.status(400).json({ message: error.message });
+	}
+};
+
 const getMe = async (req, res) => {
 	try {
 		const user = await authService.getProfile(req.user._id);
@@ -48,6 +57,7 @@ const getPendingDoctors = async (req, res) => {
 module.exports = {
 	register,
 	login,
+	logout,
 	getMe,
 	approveDoctor,
 	getPendingDoctors,
