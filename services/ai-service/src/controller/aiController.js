@@ -1,20 +1,27 @@
-import {GoogleGenerativeAI} from '@google/generative-ai';
-// import dotenv from 'dotenv';
+const { checkSymptoms } = require('../service/aiService');
 
-dotenv.config();
-
-const geminiAI = new GoogleGenerativeAI(
-  process.env.GEMINI_API_KEY
-);
-
-export const symptomsChecker = async (req, res) => {
+const analyzeSymptoms = async (req, res) => {
     try {
-        const { symtoms } = req.body;
+        const { symptoms, patientId } = req.body;
 
-        const model = geminiAI.getGenerativeModel({ model: "gemini-pro" });
-        
+        if (typeof symptoms !== 'string' || !symptoms.trim()) {
+            return res.status(400).json({ message: 'Symptoms are required' });
+        }
+
+        const data = await checkSymptoms({
+            symptoms: symptoms.trim(),
+            patientId,
+        });
+
+        return res.status(200).json(data);
     } catch (error) {
-        console.error(`Error: ${error.message}`);
-        res.status(5000).json({ error: "Fail to generate..."});
+        console.error(error);
+        return res
+            .status(500)
+            .json({ message: error.message || 'Failed to analyze symptoms' });
     }
+};
+
+module.exports = {
+    analyzeSymptoms,
 };
