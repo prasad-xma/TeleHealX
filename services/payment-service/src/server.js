@@ -1,16 +1,16 @@
 const app = require("./app");
 const env = require("./config/env");
-const connectDatabase = require("./config/db");
+const connectDB = require("./config/db");
 
 const startServer = async () => {
   try {
-    await connectDatabase();
+    await connectDB();
 
     app.listen(env.port, () => {
       console.log(`✅ ${env.serviceName} running on port ${env.port}`);
     });
-  } catch (error) {
-    console.error("❌ Failed to start payment-service:", error.message);
+  } catch (err) {
+    console.error("❌ Payment service failed:", err.message);
     process.exit(1);
   }
 };
