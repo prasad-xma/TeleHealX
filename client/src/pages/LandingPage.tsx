@@ -1,3 +1,5 @@
+import Navbar from '../components/Navbar';
+
 const LandingPage = () => {
   const userRaw = localStorage.getItem('user');
   const user = userRaw ? JSON.parse(userRaw) : null;
@@ -8,13 +10,15 @@ const LandingPage = () => {
       style={{
         minHeight: '100vh',
         display: 'flex',
+        flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'flex-start',
         background: 'linear-gradient(140deg, #eff6ff 0%, #dbeafe 40%, #bfdbfe 100%)',
-        padding: '2rem',
+        padding: '1.5rem 2rem 2rem',
         fontFamily: "'Nunito', sans-serif"
       }}
     >
+      <Navbar />
       <div
         style={{
           maxWidth: '700px',
