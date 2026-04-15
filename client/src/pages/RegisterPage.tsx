@@ -211,15 +211,7 @@ const RegisterPage = () => {
                 isSelected={formData.role === 'doctor'}
                 onClick={() => setFormData(prev => ({ ...prev, role: 'doctor' }))}
               />
-              <RoleCard
-                role="admin"
-                title="Administrator"
-                description="Manage the healthcare system and oversee operations"
-                icon={Shield}
-                isSelected={formData.role === 'admin'}
-                onClick={() => setFormData(prev => ({ ...prev, role: 'admin' }))}
-              />
-            </div>
+                          </div>
           </div>
         );
 
