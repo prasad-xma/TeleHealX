@@ -4,6 +4,8 @@ const helmet = require("helmet");
 const morgan = require("morgan");
 
 const routes = require("./routes");
+const notFoundMiddleware = require("./middlewares/notFound.middleware");
+const errorMiddleware = require("./middlewares/error.middleware");
 
 const app = express();
 
@@ -18,5 +20,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 app.use("/api", routes);
+
+app.use(notFoundMiddleware);
+app.use(errorMiddleware);
 
 module.exports = app;
