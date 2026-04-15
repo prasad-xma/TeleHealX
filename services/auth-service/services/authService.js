@@ -19,7 +19,7 @@ const register = async (payload) => {
 		throw new Error('Please fill all required fields');
 	}
 
-	if (role !== 'patient' && role !== 'doctor') {
+	if (role !== 'patient' && role !== 'doctor' && role !== 'admin') {
 		throw new Error('Invalid role');
 	}
 
