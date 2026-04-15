@@ -4,9 +4,10 @@ import './Navbar.css';
 
 const Navbar = () => {
   const navigate = useNavigate();
-  const userRaw = localStorage.getItem('user');
-  const user = userRaw ? JSON.parse(userRaw) : null;
-  const name = user?.name || 'Patient';
+
+  const handleDashboard = () => {
+    navigate('/user-dashboard');
+  };
 
   const handleLogout = async () => {
     const token = localStorage.getItem('token');
@@ -31,7 +32,9 @@ const Navbar = () => {
         <Link to="/register">Register</Link>
       </div>
       <div className="navbar__right">
-        <span>{name}</span>
+        <button type="button" onClick={handleDashboard} className="navbar__dashboard">
+          Dashboard
+        </button>
         <button type="button" onClick={handleLogout} className="navbar__logout">
           Logout
         </button>
