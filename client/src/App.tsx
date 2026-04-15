@@ -7,6 +7,8 @@ import DoctorProfilePage from './pages/doctor/DoctorProfilePage';
 import AvailabilityPage from './pages/doctor/AvailabilityPage';
 import PrescriptionsPage from './pages/doctor/PrescriptionsPage';
 import PatientReportsPage from './pages/doctor/PatientReportsPage';
+import LandingPage from './pages/LandingPage';
+import UserDashboardPage from './pages/UserDashboardPage';
 
 const ProtectedRoute = () => {
   const userStr = localStorage.getItem('user');
@@ -30,6 +32,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/dashboard" element={<Navigate to="/doctor/dashboard" replace />} />
+        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/user-dashboard" element={<UserDashboardPage />} />
         
         {/* Doctor Portal Routes */}
         <Route element={<ProtectedRoute />}>
