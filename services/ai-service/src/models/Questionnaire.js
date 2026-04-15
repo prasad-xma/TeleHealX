@@ -1,18 +1,18 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
-const questionSchema = new mongoose.Schema(
-    {
-        patientId: {
-            type: mongoose.Schema.Types.ObjectId,
-            ref: "User",
-            required: true,
-        },
-        symptoms: {
-            type: String,
-            required: true,
-        }
-    },
-    { timestamps: true }
+const questionnaireSchema = new mongoose.Schema(
+	{
+		patientId: {
+			type: mongoose.Schema.Types.ObjectId,
+			ref: 'User',
+		},
+		symptoms: {
+			type: String,
+			required: true,
+			trim: true,
+		},
+	},
+	{ timestamps: true }
 );
 
-export default mongoose.model("Questionnaire", questionSchema);
+module.exports = mongoose.model('Questionnaire', questionnaireSchema);

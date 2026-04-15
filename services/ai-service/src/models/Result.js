@@ -1,15 +1,19 @@
-import mongoose from "mongoose";
+const mongoose = require('mongoose');
 
-const resultSchema = new mongoose.Schema({
-    questionnaireId: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Questionnaire",
-        required: true
+const resultSchema = new mongoose.Schema(
+    {
+        questionnaireId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Questionnaire',
+            required: true,
+        },
+        aiResponse: {
+            type: String,
+            required: true,
+            trim: true,
+        },
     },
-    aiResponse: {
-        type: String,
-        required: true,
-    },
-}, { timestamps: true });
+    { timestamps: true }
+);
 
-export default mongoose.model("Result", resultSchema);
+module.exports = mongoose.model('Result', resultSchema);
