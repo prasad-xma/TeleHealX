@@ -38,7 +38,7 @@ app.get('/', (req, res) => {
 	});
 });
 
-const PORT = process.env.PORT || 5003;
+const PORT = process.env.PORT || 5005;
 
 app.listen(PORT, () => {
 	console.log(`Telemedicine service running on port ${PORT}`);
