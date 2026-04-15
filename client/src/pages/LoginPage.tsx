@@ -79,11 +79,28 @@ const LoginPage = () => {
       if (response.data?.token) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
+        localStorage.setItem('userRole', response.data.user.role);
+        localStorage.setItem('userName', response.data.user.name);
       }
       
       setTimeout(() => {
         if (response.data?.user?.role === 'patient') {
-          navigate('/landing');
+          navigate('/dashboard');
+          return;
+        }
+
+        if (response.data?.user?.role === 'admin') {
+          navigate('/admin');
+          return;
+        }
+
+        if (response.data?.user?.role === 'doctor') {
+          // Check if doctor is approved
+          if (response.data.user.isApproved) {
+            navigate('/dashboard');
+          } else {
+            navigate('/doctor-login-blocked');
+          }
           return;
         }
 
