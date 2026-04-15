@@ -115,6 +115,12 @@ const login = async (payload) => {
 	};
 };
 
+const logout = async () => {
+	return {
+		message: 'Logout successful',
+	};
+};
+
 const getProfile = async (userId) => {
 	const user = await User.findById(userId).select('-password');
 	if (!user) {
@@ -156,6 +162,7 @@ const getPendingDoctorApplications = async () => {
 module.exports = {
 	register,
 	login,
+	logout,
 	getProfile,
 	approveDoctor,
 	getPendingDoctorApplications,
