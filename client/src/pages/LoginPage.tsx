@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, Mail, Lock, ArrowLeft, Stethoscope, AlertTriangle, CheckCircle } from 'lucide-react';
 import { login as loginService } from '../services/authService';
 
@@ -35,6 +35,7 @@ const InputField = ({ label, icon: Icon, type, name, value, onChange, placeholde
 );
 
 const LoginPage = () => {
+  const navigate = useNavigate();
   const [formData, setFormData] = useState({
     email: '',
     password: ''
@@ -81,8 +82,12 @@ const LoginPage = () => {
       }
       
       setTimeout(() => {
-        // Redirect to dashboard or home page
-        window.location.href = '/dashboard';
+        if (response.data?.user?.role === 'patient') {
+          navigate('/landing');
+          return;
+        }
+
+        navigate('/login');
       }, 1000);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
