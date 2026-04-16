@@ -67,15 +67,3 @@ export const createAppointmentForPatient = async (payload: {
     throw error;
   }
 };
-
-export const createMeetingForDoctorAppointment = async (appointmentId: string) => {
-  try {
-    const response = await axios.patch(`${API_BASE_URL}/doctor/${appointmentId}/meeting`, {}, {
-      headers: authHeader()
-    });
-
-    return response.data.data;
-  } catch (error: any) {
-    throw error;
-  }
-};

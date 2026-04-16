@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Loader2, RefreshCw, Video, User, FileText, AlertTriangle } from 'lucide-react';
-import { createMeetingForDoctorAppointment, getMyDoctorAppointments } from '../../services/appointmentService';
+import { getMyDoctorAppointments } from '../../services/appointmentService';
+import { createTelemedicineMeeting } from '../../services/telemedicineService';
 
 type Appointment = {
   _id: string;
@@ -75,7 +76,7 @@ const DoctorAppointmentsPage = () => {
     setCreatingMeetingId(appointment._id);
 
     try {
-      const updated = await createMeetingForDoctorAppointment(appointment._id);
+      const updated = await createTelemedicineMeeting(appointment._id);
       const roomName = updated?.meetingRoomName;
 
       if (!roomName) {
