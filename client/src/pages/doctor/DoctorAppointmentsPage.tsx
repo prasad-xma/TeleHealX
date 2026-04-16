@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Loader2, RefreshCw, Video, User, FileText, AlertTriangle } from 'lucide-react';
-import { getMyDoctorAppointments } from '../../services/appointmentService';
+import { getMeetingAccess, getMyDoctorAppointments } from '../../services/appointmentService';
 import { createTelemedicineMeeting } from '../../services/telemedicineService';
 
 type Appointment = {
@@ -94,9 +94,10 @@ const DoctorAppointmentsPage = () => {
 
   const handleJoinMeeting = async (roomName: string) => {
     try {
+      await getMeetingAccess(roomName);
       openMeetingRoom(roomName);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Unable to join meeting');
+      setError(err.response?.data?.message || err.message || 'Unable to join meeting');
     }
   };
 

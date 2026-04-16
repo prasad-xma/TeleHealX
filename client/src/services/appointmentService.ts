@@ -93,6 +93,15 @@ export interface CreateAppointmentPayload {
   consultationFee?: number | null;
 }
 
+export interface MeetingAccessResponse {
+  roomName: string;
+  appointmentId: string;
+  doctorId: string;
+  patientId: string;
+  doctorName: string;
+  patientName: string;
+}
+
 export const getDoctorsForPatient = async (
   name = '',
   specialty = '',
@@ -151,6 +160,15 @@ export const getMyDoctorAppointments = async () => {
       status: normalizeDoctorAppointmentStatus(appointment.status)
     }))
   } as DoctorAppointmentsResponse;
+};
+
+export const getMeetingAccess = async (roomName: string) => {
+  const response = await axios.get(`${APPOINTMENT_API_BASE_URL}/meeting/access`, {
+    params: { roomName },
+    headers: getAuthHeaders()
+  });
+
+  return response.data?.data as MeetingAccessResponse;
 };
 
 export const getPatientAppointmentById = async (appointmentId: string) => {

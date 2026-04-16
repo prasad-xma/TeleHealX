@@ -22,6 +22,7 @@ import {
   getDoctorDetailsForPatient,
   getDoctorSlotsForPatient,
   getDoctorsForPatient,
+  getMeetingAccess,
   getMyPatientAppointments,
   type DoctorListItem
 } from '../../services/appointmentService';
@@ -323,6 +324,24 @@ const AppointmentBooking = () => {
 
   const availableSlots = slots.filter((slot) => slot.isAvailable);
   const bookedSlots = slots.filter((slot) => !slot.isAvailable);
+
+  const handleJoinCall = async (meetingRoomName: string) => {
+    const roomName = String(meetingRoomName || '').trim();
+
+    if (!roomName) {
+      setError('Meeting room is not available yet');
+      return;
+    }
+
+    setError('');
+
+    try {
+      await getMeetingAccess(roomName);
+      navigate(`/video-call/${encodeURIComponent(roomName)}`);
+    } catch (error: any) {
+      setError(error?.response?.data?.message || error?.message || 'Unable to join call');
+    }
+  };
 
   return (
     <>
@@ -1176,8 +1195,27 @@ const AppointmentBooking = () => {
                     ) : null}
 
                     {appointment.meetingRoomName ? (
-                      <div className="helper-text" style={{ marginTop: '0.8rem' }}>
-                        Meeting Room: {appointment.meetingRoomName}
+                      <div
+                        className="helper-text"
+                        style={{
+                          marginTop: '0.8rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '0.75rem',
+                          flexWrap: 'wrap'
+                        }}
+                      >
+                        <span>Meeting Room: {appointment.meetingRoomName}</span>
+                        <button
+                          type="button"
+                          className="action-btn"
+                          onClick={() => handleJoinCall(appointment.meetingRoomName || '')}
+                          style={{ padding: '0.55rem 0.95rem' }}
+                        >
+                          <Video size={15} />
+                          Join Call
+                        </button>
                       </div>
                     ) : null}
                   </div>

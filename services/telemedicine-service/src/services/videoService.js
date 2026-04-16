@@ -11,13 +11,6 @@ const buildIdentity = (user) => {
   return `${user.role}-${user.id}`;
 };
 
-const slugify = (value = '') =>
-  String(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 24);
-
 const requestAppointmentService = async ({ path, method = 'GET', authorizationHeader, body }) => {
   const appointmentServiceUrl = process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5007';
   const response = await fetch(`${appointmentServiceUrl}${path}`, {
@@ -44,53 +37,22 @@ const requestAppointmentService = async ({ path, method = 'GET', authorizationHe
   return payload.data;
 };
 
-const getAppointmentById = async ({ appointmentId, authorizationHeader }) => {
-  return requestAppointmentService({
-    path: `/api/appointments/${appointmentId}`,
-    authorizationHeader,
-  });
-};
-
-const getAppointmentByRoomName = async ({ roomName, authorizationHeader }) => {
-  const trimmedRoomName = String(roomName || '').trim();
-
-  return requestAppointmentService({
-    path: `/api/appointments/meeting/room/${encodeURIComponent(trimmedRoomName)}`,
-    authorizationHeader,
-  });
-};
-
-const updateAppointmentMeetingRoom = async ({ appointmentId, meetingRoomName, authorizationHeader }) => {
-  return requestAppointmentService({
-    path: `/api/appointments/${appointmentId}/meeting-room`,
-    method: 'PATCH',
-    authorizationHeader,
-    body: { meetingRoomName },
-  });
-};
-
 const createMeetingForAppointment = async ({ appointmentId, authorizationHeader, doctorUserId }) => {
-  const appointment = await getAppointmentById({ appointmentId, authorizationHeader });
-
-  const doctorMatches = String(appointment.doctorUserId || appointment.doctorId || '') === String(doctorUserId || '');
-
-  if (!doctorMatches) {
-    throw new Error('Appointment not found for this doctor');
+  if (!appointmentId) {
+    throw new Error('appointmentId is required');
   }
 
-  const currentRoom = String(appointment.meetingRoomName || '').trim();
-  if (currentRoom) {
-    return appointment;
+  if (!authorizationHeader) {
+    throw new Error('Authorization header is required');
   }
 
-  const doctorSlug = slugify(appointment.doctorName) || 'doctor';
-  const patientSlug = slugify(appointment.patientName) || 'patient';
-  const suffix = String(appointment._id).slice(-6);
-  const meetingRoomName = `${doctorSlug}-with-${patientSlug}-${suffix}`;
+  if (!doctorUserId) {
+    throw new Error('doctorUserId is required');
+  }
 
-  return updateAppointmentMeetingRoom({
-    appointmentId,
-    meetingRoomName,
+  return requestAppointmentService({
+    path: `/api/appointments/doctor/${encodeURIComponent(String(appointmentId))}/meeting`,
+    method: 'PATCH',
     authorizationHeader,
   });
 };
@@ -106,7 +68,10 @@ const ensureMeetingAccess = async ({ roomName, authorizationHeader, user }) => {
     throw new Error('Authorization header is required');
   }
 
-  const appointment = await getAppointmentByRoomName({ roomName: trimmedRoomName, authorizationHeader });
+  const appointment = await requestAppointmentService({
+    path: `/api/appointments/meeting/access?roomName=${encodeURIComponent(trimmedRoomName)}`,
+    authorizationHeader,
+  });
 
   if (!appointment) {
     throw new Error('Meeting access denied');
