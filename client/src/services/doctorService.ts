@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-const DOCTOR_URL = import.meta.env.VITE_DOCTOR_SERVICE_URL || 'http://localhost:5001';
-const API_BASE_URL = `${DOCTOR_URL}/api`;
+const GATEWAY_URL = import.meta.env.VITE_GATEWAY_URL || 'http://localhost:5000';
+const API_BASE_URL = `${GATEWAY_URL}/api`;
 
 const authHeader = () => ({ Authorization: `Bearer ${localStorage.getItem('token')}` });
 
