@@ -85,11 +85,31 @@ const getAppointmentsForPatient = async (patientId) => {
   };
 };
 
+const createMeetingForAppointment = async ({ appointmentId, doctorUserId }) => {
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    $or: [{ doctorUserId }, { doctorId: doctorUserId }]
+  });
+
+  if (!appointment) {
+    throw new Error('Appointment not found for this doctor');
+  }
+
+  if (!appointment.meetingRoomName) {
+    appointment.meetingRoomName = `meeting_${appointment._id}`;
+    appointment.meetingCreatedAt = new Date();
+    await appointment.save();
+  }
+
+  return appointment.toObject();
+};
+
 module.exports = {
   getModuleInfo,
   getMyAppointmentAccessInfo,
   getAppointmentsForDoctor,
   getDoctorsForPatient,
   createAppointmentForPatient,
-  getAppointmentsForPatient
+  getAppointmentsForPatient,
+  createMeetingForAppointment
 };
