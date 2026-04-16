@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { User, Mail, Lock, Phone, Calendar, Heart, Activity, Pill } from 'lucide-react';
+import { User, Mail, Lock, Calendar, Heart } from 'lucide-react';
 
 const RegisterPage = () => {
   const [formData, setFormData] = useState({
@@ -8,8 +8,8 @@ const RegisterPage = () => {
     email: '',
     password: '',
     confirmPassword: '',
-    phone: '',
-    dateOfBirth: '',
+    address: '',
+    birthDay: '',
     gender: '',
     role: 'patient'
   });
@@ -36,7 +36,7 @@ const RegisterPage = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch('http://localhost:5001/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -45,8 +45,8 @@ const RegisterPage = () => {
           name: formData.name,
           email: formData.email,
           password: formData.password,
-          phone: formData.phone,
-          dateOfBirth: formData.dateOfBirth,
+          address: formData.address,
+          birthDay: formData.birthDay,
           gender: formData.gender,
           role: formData.role
         })
@@ -158,18 +158,18 @@ const RegisterPage = () => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone Number
+              Address
             </label>
             <div className="relative">
-              <Phone className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+              <User className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
               <input
-                type="tel"
-                name="phone"
-                value={formData.phone}
+                type="text"
+                name="address"
+                value={formData.address}
                 onChange={handleChange}
                 required
                 className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                placeholder="+1234567890"
+                placeholder="Your address"
               />
             </div>
           </div>
@@ -182,8 +182,8 @@ const RegisterPage = () => {
               <Calendar className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
               <input
                 type="date"
-                name="dateOfBirth"
-                value={formData.dateOfBirth}
+                name="birthDay"
+                value={formData.birthDay}
                 onChange={handleChange}
                 required
                 className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

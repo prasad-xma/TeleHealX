@@ -966,7 +966,7 @@ const AdminDashboard = () => {
                     
                     <select
                       value={filterType}
-                      onChange={(e) => setFilterType(e.target.value)}
+                      onChange={(e) => setFilterType(e.target.value as 'all' | 'appointment' | 'consultation' | 'subscription' | 'refund' | 'other')}
                       className="filter-select"
                     >
                       <option value="all">All Types</option>
