@@ -49,6 +49,37 @@ export interface DoctorSlotsResponse {
   availableSlots: number;
 }
 
+export interface DoctorAppointmentsResponse {
+  appointments: Array<{
+    _id: string;
+    patientName: string;
+    date: string;
+    time: string;
+    type: 'consultation' | 'checkup' | 'followup' | 'emergency';
+    status: string;
+    notes?: string;
+    isVideoConsultation?: boolean;
+    meetingRoomName?: string;
+  }>;
+  totalAppointments: number;
+}
+
+const normalizeDoctorAppointmentStatus = (status: string) => {
+  switch (String(status || '').toUpperCase()) {
+    case 'PENDING':
+    case 'PENDING_PAYMENT':
+      return 'scheduled';
+    case 'CONFIRMED':
+      return 'confirmed';
+    case 'COMPLETED':
+      return 'completed';
+    case 'CANCELLED':
+      return 'cancelled';
+    default:
+      return 'scheduled';
+  }
+};
+
 export interface CreateAppointmentPayload {
   doctorId: string;
   doctorName: string;
@@ -104,6 +135,22 @@ export const getMyPatientAppointments = async () => {
   });
 
   return response.data?.data;
+};
+
+export const getMyDoctorAppointments = async () => {
+  const response = await axios.get(`${APPOINTMENT_API_BASE_URL}/doctor/me`, {
+    headers: getAuthHeaders()
+  });
+
+  const data = response.data?.data as DoctorAppointmentsResponse | undefined;
+
+  return {
+    ...data,
+    appointments: (data?.appointments || []).map((appointment) => ({
+      ...appointment,
+      status: normalizeDoctorAppointmentStatus(appointment.status)
+    }))
+  } as DoctorAppointmentsResponse;
 };
 
 export const getPatientAppointmentById = async (appointmentId: string) => {
