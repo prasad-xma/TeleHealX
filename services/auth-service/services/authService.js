@@ -211,14 +211,18 @@ const getDoctorById = async (doctorId) => {
     _id: doctorId,
     role: 'doctor',
     isApproved: true
-  }).select('name email phone role isApproved doctorInfo');
+  }).select('name email phone role isApproved');
 
   if (!doctor) {
 		console.error('[AUTH SERVICE] Doctor not found:', doctorId);
     throw new Error('Doctor not found');
   }
 
-	console.log('[AUTH SERVICE] Doctor found:', { name: doctor.name, email: doctor.email });
+  // Fetch doctor application details for specialization
+  const doctorApplication = await DoctorApplication.findOne({ user: doctor._id });
+  const specialization = doctorApplication?.specialization || 'General Medicine';
+
+	console.log('[AUTH SERVICE] Doctor found:', { name: doctor.name, email: doctor.email, specialization });
   return {
     _id: doctor._id,
     id: doctor._id,
@@ -227,7 +231,7 @@ const getDoctorById = async (doctorId) => {
     phone: doctor.phone,
     role: doctor.role,
     isApproved: doctor.isApproved,
-    specialization: doctor.doctorInfo?.specialization || 'General Medicine'
+    specialization
   };
 };
 

@@ -620,28 +620,35 @@ const createAppointmentForPatient = async ({
   try {
     console.log('[APPOINTMENT SERVICE] Starting notification process...');
 
+    // Check if notification service URL is configured
+    if (!env.notificationServiceUrl) {
+      console.warn('[APPOINTMENT SERVICE] NOTIFICATION_SERVICE_URL is not configured. Skipping notifications.');
+      return created;
+    }
+
     console.log('[APPOINTMENT SERVICE] Fetching patient data from auth service...');
     const patientResponse = await axios.get(`${env.authServiceUrl}/api/auth/users/${patientId}`, {
       timeout: 5000,
       headers: {
-        'x-internal-api-key': process.env.INTERNAL_API_KEY || 'internal-key'
+        'x-internal-api-key': env.internalServiceSecret || 'internal-key'
       }
     });
     const patientData = patientResponse.data;
-    console.log('[APPOINTMENT SERVICE] Patient data fetched:', { name: patientData.name, email: patientData.email });
+    console.log('[APPOINTMENT SERVICE] Patient data fetched:', { name: patientData.name, email: patientData.email, phone: patientData.phone });
 
     console.log('[APPOINTMENT SERVICE] Fetching doctor data from auth service...');
     const doctorResponse = await axios.get(`${env.authServiceUrl}/api/auth/doctors/${doctorId}`, {
       timeout: 5000,
       headers: {
-        'x-internal-api-key': process.env.INTERNAL_API_KEY || 'internal-key'
+        'x-internal-api-key': env.internalServiceSecret || 'internal-key'
       }
     });
     const doctorData = doctorResponse.data;
-    console.log('[APPOINTMENT SERVICE] Doctor data fetched:', { name: doctorData.name, email: doctorData.email });
+    console.log('[APPOINTMENT SERVICE] Doctor data fetched:', { name: doctorData.name, email: doctorData.email, phone: doctorData.phone });
 
     console.log('[APPOINTMENT SERVICE] Sending notifications to notification service...');
-    await axios.post(`${env.notificationServiceUrl}/api/notifications/appointment-booked`, {
+    console.log('[APPOINTMENT SERVICE] Notification Service URL:', env.notificationServiceUrl);
+    const notificationResponse = await axios.post(`${env.notificationServiceUrl}/api/notifications/appointment-booked`, {
       appointmentData: {
         _id: created._id,
         date: created.date,
@@ -664,15 +671,15 @@ const createAppointmentForPatient = async ({
     }, {
       timeout: 10000,
       headers: {
-        'x-internal-api-key': process.env.INTERNAL_API_KEY || 'internal-key'
+        'x-internal-api-key': env.internalServiceSecret || 'internal-key'
       }
     });
 
-    console.log('[APPOINTMENT SERVICE] Notifications sent successfully');
+    console.log('[APPOINTMENT SERVICE] Notifications sent successfully:', notificationResponse.status);
 
   } catch (notificationError) {
     console.error('[APPOINTMENT SERVICE] Failed to send appointment booking notifications:', notificationError.message);
-    console.error('[APPOINTMENT SERVICE] Notification error details:', notificationError.response?.data || notificationError);
+    console.error('[APPOINTMENT SERVICE] Notification error details:', notificationError.response?.data || notificationError.config || notificationError);
     // Log notification error but don't fail the appointment creation
   }
 
