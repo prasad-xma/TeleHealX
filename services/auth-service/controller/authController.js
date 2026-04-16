@@ -105,3 +105,4 @@ module.exports = {
 	getDoctorById,
 	getUserById,
 };
+};
