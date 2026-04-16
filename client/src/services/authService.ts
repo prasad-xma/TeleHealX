@@ -33,3 +33,22 @@ export const getProfile = async (token: string) => {
     throw error;
   }
 };
+
+export const logout = async (token?: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/logout`,
+      {},
+      token
+        ? {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        : undefined
+    );
+    return response;
+  } catch (error: any) {
+    throw error;
+  }
+};

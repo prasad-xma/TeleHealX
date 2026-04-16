@@ -236,7 +236,8 @@ class NotificationController {
           notification.sms.status = 'sent';
           notification.sms.sentAt = new Date();
           notification.sms.error = undefined;
-          retrySuccess = true;
+        } else {
+          notification.sms.error = smsResult.error;
         }
       }
 
@@ -297,6 +298,101 @@ class NotificationController {
 
     } catch (error) {
       logger.error('Error fetching notification stats:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  // Send appointment booking notifications to both patient and doctor
+  async sendAppointmentBookingNotifications(req, res) {
+    console.log('📨 [NOTIFICATION CONTROLLER] Received appointment booking notification request');
+    console.log('📨 [NOTIFICATION CONTROLLER] Request body:', req.body);
+
+    try {
+      const { appointmentData, patientData, doctorData } = req.body;
+
+      console.log('🔍 [NOTIFICATION CONTROLLER] Validating notification data...');
+      // Validate required data
+      if (!appointmentData || !patientData || !doctorData) {
+        console.error('❌ [NOTIFICATION CONTROLLER] Missing required data:', { appointmentData: !!appointmentData, patientData: !!patientData, doctorData: !!doctorData });
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required data: appointmentData, patientData, or doctorData'
+        });
+      }
+
+      console.log('⚙️ [NOTIFICATION CONTROLLER] Calling notification service...');
+      const notificationService = require('../services/notificationService');
+      const result = await notificationService.sendAppointmentBookingNotifications(
+        appointmentData,
+        patientData,
+        doctorData
+      );
+
+      if (result.success) {
+        console.log('✅ [NOTIFICATION CONTROLLER] Appointment booking notifications sent successfully');
+        res.status(200).json({
+          success: true,
+          message: 'Appointment booking notifications sent successfully',
+          data: result
+        });
+      } else {
+        console.error('❌ [NOTIFICATION CONTROLLER] Failed to send notifications:', result.error);
+        res.status(500).json({
+          success: false,
+          message: 'Failed to send appointment booking notifications',
+          error: result.error
+        });
+      }
+
+    } catch (error) {
+      console.error('❌ [NOTIFICATION CONTROLLER] Error in sendAppointmentBookingNotifications:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  // Send consultation completion notifications to both patient and doctor
+  async sendConsultationCompletedNotifications(req, res) {
+    try {
+      const { appointmentData, patientData, doctorData, prescriptionIssued = false } = req.body;
+
+      // Validate required data
+      if (!appointmentData || !patientData || !doctorData) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required data: appointmentData, patientData, or doctorData'
+        });
+      }
+
+      const notificationService = require('../services/notificationService');
+      const result = await notificationService.sendConsultationCompletedNotifications(
+        appointmentData,
+        patientData,
+        doctorData,
+        prescriptionIssued
+      );
+
+      if (result.success) {
+        res.status(200).json({
+          success: true,
+          message: 'Consultation completion notifications sent successfully',
+          data: result
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to send consultation completion notifications',
+          error: result.error
+        });
+      }
+
+    } catch (error) {
+      logger.error('Error sending consultation completion notifications:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'

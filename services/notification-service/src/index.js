@@ -1,11 +1,14 @@
-const express = require('express');
 const dotenv = require('dotenv');
+dotenv.config();
+
+const express = require('express');
+const emailService = require('./services/emailService');
+const smsService = require('./services/smsService');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const notificationRoutes = require('./routes/notificationRoutes');
 const logger = require('./utils/logger');
 
-dotenv.config();
 connectDB();
 
 const app = express();
@@ -51,7 +54,9 @@ app.use((err, req, res, next) => {
   });
 });
 
-const PORT = process.env.PORT || 5005;
+const PORT = process.env.PORT || 5007;
 app.listen(PORT, () => {
   logger.info(`Notification Service running on port ${PORT}`);
 });
+
+console.log("EMAIL_HOST:", process.env.EMAIL_HOST);
