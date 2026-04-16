@@ -161,6 +161,21 @@ const completeDoctorAppointment = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Appointment marked as completed");
 });
 
+const updateAppointmentPaymentStatusInternal = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const { paymentStatus, appointmentStatus, note, paymentReference } = req.body;
+
+  const result = await appointmentService.updateAppointmentPaymentStatusInternal({
+    appointmentId,
+    paymentStatus,
+    appointmentStatus,
+    note,
+    paymentReference
+  });
+
+  return sendSuccess(res, result, "Appointment payment status updated successfully");
+});
+
 const getMeetingAccess = asyncHandler(async (req, res) => {
   const roomName = typeof req.query.roomName === "string" ? req.query.roomName.trim() : "";
 
@@ -205,6 +220,7 @@ module.exports = {
   reschedulePatientAppointment,
   cancelDoctorAppointment,
   completeDoctorAppointment,
+  updateAppointmentPaymentStatusInternal,
   createMeetingForDoctorAppointment,
   getMeetingAccess
 };
