@@ -16,9 +16,10 @@ import {
   Loader,
   X
 } from 'lucide-react';
-import { 
-  getMedicalReports, 
-  deleteMedicalReport 
+import {
+  getMedicalReports,
+  deleteMedicalReport,
+  downloadMedicalReport
 } from '../../services/patientService';
 
 interface MedicalReport {
@@ -78,7 +79,7 @@ const MedicalReportsManagement = () => {
 
   const handleDelete = async () => {
     if (!selectedReport) return;
-    
+
     setLoading(true);
     try {
       await deleteMedicalReport(selectedReport._id);
@@ -92,6 +93,55 @@ const MedicalReportsManagement = () => {
       setTimeout(() => setError(''), 3000);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewReport = async (reportId: string, fileName: string) => {
+    console.log('handleViewReport called with reportId:', reportId, 'fileName:', fileName);
+    try {
+      console.log('Calling downloadMedicalReport...');
+      const response = await downloadMedicalReport(reportId);
+      console.log('Response received:', response);
+      const binaryString = atob(response.fileData);
+      console.log('Base64 decoded, length:', binaryString.length);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      console.log('Bytes array created, length:', bytes.length);
+      const blob = new Blob([bytes], { type: response.mimeType });
+      console.log('Blob created:', blob);
+      const url = window.URL.createObjectURL(blob);
+      console.log('Object URL created:', url);
+      window.open(url, '_blank');
+      console.log('Window opened');
+    } catch (error: any) {
+      console.error('Error in handleViewReport:', error);
+      setError('Failed to view report');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  const handleDownloadReport = async (reportId: string, fileName: string) => {
+    try {
+      const response = await downloadMedicalReport(reportId);
+      const binaryString = atob(response.fileData);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      const blob = new Blob([bytes], { type: response.mimeType });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', response.fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      setError('Failed to download report');
+      setTimeout(() => setError(''), 3000);
     }
   };
 
@@ -255,7 +305,6 @@ const MedicalReportsManagement = () => {
           box-shadow: 0 8px 30px rgba(59,130,246,0.08);
           border: 1px solid rgba(59,130,246,0.08);
           transition: all 0.3s;
-          cursor: pointer;
         }
 
         .report-card:hover {
@@ -285,8 +334,9 @@ const MedicalReportsManagement = () => {
         .report-actions {
           display: flex;
           gap: 0.5rem;
-          opacity: 0;
+          opacity: 1;
           transition: opacity 0.2s;
+          pointer-events: auto;
         }
 
         .report-card:hover .report-actions {
@@ -294,13 +344,17 @@ const MedicalReportsManagement = () => {
         }
 
         .action-btn {
-          background: #F1F5F9;
-          border: none;
+          background: #FF0000;
+          border: 2px solid #000;
           padding: 0.5rem;
           border-radius: 8px;
           cursor: pointer;
           transition: all 0.2s;
-          color: '#64748B';
+          color: white;
+          pointer-events: auto;
+          z-index: 10;
+          min-width: 40px;
+          min-height: 40px;
         }
 
         .action-btn:hover {
@@ -587,13 +641,29 @@ const MedicalReportsManagement = () => {
                       </span>
                     </div>
                     <div className="report-actions">
-                      <button className="action-btn">
+                      <button
+                        className="action-btn"
+                        style={{ background: '#FF0000', border: '2px solid #000', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', pointerEvents: 'auto', zIndex: 10, minWidth: '40px', minHeight: '40px', color: 'white' }}
+                        onClick={() => {
+                          alert('Eye button clicked! Report ID: ' + report._id);
+                          console.log('Eye button clicked!', report._id);
+                          handleViewReport(report._id, report.fileName);
+                        }}
+                      >
                         <Eye size={16} />
                       </button>
-                      <button className="action-btn">
+                      <button
+                        className="action-btn"
+                        style={{ background: '#FF0000', border: '2px solid #000', padding: '0.5rem', borderRadius: '8px', cursor: 'pointer', pointerEvents: 'auto', zIndex: 10, minWidth: '40px', minHeight: '40px', color: 'white' }}
+                        onClick={() => {
+                          alert('Download button clicked! Report ID: ' + report._id);
+                          console.log('Download button clicked!', report._id);
+                          handleDownloadReport(report._id, report.fileName);
+                        }}
+                      >
                         <Download size={16} />
                       </button>
-                      <button 
+                      <button
                         className="action-btn delete"
                         onClick={() => {
                           setSelectedReport(report);

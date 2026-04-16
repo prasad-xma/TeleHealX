@@ -7,6 +7,7 @@ const {
     uploadMedicalReport,
     getMedicalReports,
     deleteMedicalReport,
+    downloadMedicalReport,
     addPrescription,
     getPrescriptions,
     getPrescriptionById,
@@ -24,6 +25,7 @@ router.get('/medical-history', getMedicalHistory);
 // Medical Reports
 router.post('/reports', uploadMedicalReport);
 router.get('/reports', getMedicalReports);
+router.get('/reports/:id', downloadMedicalReport);
 router.delete('/reports/:id', deleteMedicalReport);
 
 // Prescriptions
