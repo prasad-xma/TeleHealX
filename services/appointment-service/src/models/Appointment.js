@@ -51,6 +51,14 @@ const appointmentSchema = new mongoose.Schema(
     isVideoConsultation: {
       type: Boolean,
       default: false
+    },
+    meetingRoomName: {
+      type: String,
+      trim: true,
+      default: ''
+    },
+    meetingCreatedAt: {
+      type: Date
     }
   },
   {

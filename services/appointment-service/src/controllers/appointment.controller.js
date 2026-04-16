@@ -58,11 +58,43 @@ const getMyPatientAppointments = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, 'Patient appointments fetched successfully');
 });
 
+const getMeetingAccess = asyncHandler(async (req, res) => {
+  const { roomName = '' } = req.query;
+
+  const result = await appointmentService.getMeetingAccessForUser({
+    roomName,
+    userId: req.user.userId,
+    role: req.user.role
+  });
+
+  return sendSuccess(res, result, 'Meeting access validated successfully');
+});
+
+const createMeetingForDoctorAppointment = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+
+  if (!appointmentId) {
+    return res.status(400).json({
+      success: false,
+      message: 'appointmentId is required'
+    });
+  }
+
+  const result = await appointmentService.createMeetingForAppointment({
+    appointmentId,
+    doctorUserId: req.user.userId
+  });
+
+  return sendSuccess(res, result, 'Meeting created successfully');
+});
+
 module.exports = {
   getAppointmentModuleInfo,
   getMyAppointmentAccessInfo,
   getMyDoctorAppointments,
   getDoctorsForPatient,
   createAppointmentForPatient,
-  getMyPatientAppointments
+  getMyPatientAppointments,
+  createMeetingForDoctorAppointment,
+  getMeetingAccess
 };

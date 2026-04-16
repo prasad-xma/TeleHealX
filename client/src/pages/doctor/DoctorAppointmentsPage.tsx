@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Loader2, RefreshCw, Video, User, FileText, AlertTriangle } from 'lucide-react';
-import { getMyDoctorAppointments } from '../../services/appointmentService';
+import { createMeetingForDoctorAppointment, getMyDoctorAppointments } from '../../services/appointmentService';
 
 type Appointment = {
   _id: string;
@@ -11,11 +12,14 @@ type Appointment = {
   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
   notes?: string;
   isVideoConsultation?: boolean;
+  meetingRoomName?: string;
 };
 
 const DoctorAppointmentsPage = () => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
+  const [creatingMeetingId, setCreatingMeetingId] = useState('');
   const [error, setError] = useState('');
   const [doctorName, setDoctorName] = useState('Doctor');
 
@@ -60,6 +64,39 @@ const DoctorAppointmentsPage = () => {
     };
 
     return colors[status];
+  };
+
+  const openMeetingRoom = (roomName: string) => {
+    navigate(`/video-call/${encodeURIComponent(roomName)}`);
+  };
+
+  const handleCreateMeeting = async (appointment: Appointment) => {
+    setError('');
+    setCreatingMeetingId(appointment._id);
+
+    try {
+      const updated = await createMeetingForDoctorAppointment(appointment._id);
+      const roomName = updated?.meetingRoomName;
+
+      if (!roomName) {
+        throw new Error('Meeting room was not created');
+      }
+
+      openMeetingRoom(roomName);
+      await fetchAppointments();
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Failed to create meeting');
+    } finally {
+      setCreatingMeetingId('');
+    }
+  };
+
+  const handleJoinMeeting = async (roomName: string) => {
+    try {
+      openMeetingRoom(roomName);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Unable to join meeting');
+    }
   };
 
   return (
@@ -157,6 +194,28 @@ const DoctorAppointmentsPage = () => {
           opacity: 0.75;
           cursor: not-allowed;
         }
+
+        .meeting-btn {
+          border: none;
+          border-radius: 10px;
+          padding: 0.55rem 0.9rem;
+          font-size: 0.82rem;
+          font-weight: 700;
+          cursor: pointer;
+          color: white;
+          background: #2563eb;
+          margin-top: 0.75rem;
+          margin-right: 0.5rem;
+        }
+
+        .meeting-btn.join {
+          background: #16a34a;
+        }
+
+        .meeting-btn:disabled {
+          opacity: 0.7;
+          cursor: not-allowed;
+        }
       `}</style>
 
       <div className="appointment-shell">
@@ -242,6 +301,25 @@ const DoctorAppointmentsPage = () => {
                     <span className="flex items-center gap-2"><Calendar size={16} /> {formatDate(appointment.date)}</span>
                     <span className="flex items-center gap-2"><Clock size={16} /> {appointment.time}</span>
                     <span className="flex items-center gap-2">Type: {appointment.type}</span>
+                  </div>
+
+                  <div>
+                    <button
+                      className="meeting-btn"
+                      onClick={() => handleCreateMeeting(appointment)}
+                      disabled={creatingMeetingId === appointment._id}
+                    >
+                      {creatingMeetingId === appointment._id ? 'Creating...' : 'Create Meeting'}
+                    </button>
+
+                    {appointment.meetingRoomName ? (
+                      <button
+                        className="meeting-btn join"
+                        onClick={() => handleJoinMeeting(appointment.meetingRoomName || '')}
+                      >
+                        Join Meeting
+                      </button>
+                    ) : null}
                   </div>
                 </div>
               ))}
