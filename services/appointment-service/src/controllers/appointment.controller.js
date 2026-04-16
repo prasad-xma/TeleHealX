@@ -69,34 +69,37 @@ const getMyPatientAppointments = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Patient appointments fetched successfully");
 });
 
-const getMeetingAccess = asyncHandler(async (req, res) => {
-  const roomName = typeof req.query.roomName === "string" ? req.query.roomName.trim() : "";
+const getAppointmentById = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const result = await appointmentService.getAppointmentById(appointmentId);
 
-  const result = await appointmentService.getMeetingAccessForUser({
-    roomName,
-    userId: req.user.userId,
-    role: req.user.role
-  });
-
-  return sendSuccess(res, result, "Meeting access validated successfully");
+  return sendSuccess(res, result, 'Appointment fetched successfully');
 });
 
-const createMeetingForDoctorAppointment = asyncHandler(async (req, res) => {
-  const { appointmentId } = req.params;
+const getAppointmentByRoomName = asyncHandler(async (req, res) => {
+  const { roomName = '' } = req.params;
+  const result = await appointmentService.getAppointmentByRoomName(roomName);
 
-  if (!appointmentId) {
+  return sendSuccess(res, result, 'Appointment fetched successfully');
+});
+
+const updateMeetingRoomForAppointment = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const { meetingRoomName } = req.body;
+
+  if (!appointmentId || !meetingRoomName) {
     return res.status(400).json({
       success: false,
-      message: "appointmentId is required"
+      message: 'appointmentId and meetingRoomName are required'
     });
   }
 
-  const result = await appointmentService.createMeetingForAppointment({
+  const result = await appointmentService.updateMeetingRoomForAppointment({
     appointmentId,
-    doctorUserId: req.user.userId
+    meetingRoomName
   });
 
-  return sendSuccess(res, result, "Meeting created successfully");
+  return sendSuccess(res, result, 'Meeting room updated successfully');
 });
 
 module.exports = {
@@ -106,6 +109,7 @@ module.exports = {
   getDoctorsForPatient,
   createAppointmentForPatient,
   getMyPatientAppointments,
-  createMeetingForDoctorAppointment,
-  getMeetingAccess
+  getAppointmentById,
+  getAppointmentByRoomName,
+  updateMeetingRoomForAppointment
 };

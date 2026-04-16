@@ -13,6 +13,7 @@ import {
   Lock,
   Mail,
   MapPin,
+  Phone,
   ShieldCheck,
   Stethoscope,
   User,
@@ -26,6 +27,7 @@ type Role = 'patient' | 'doctor';
 type RegisterForm = {
   name: string;
   email: string;
+  phone: string;
   password: string;
   confirmPassword: string;
   birthDay: string;
@@ -43,6 +45,7 @@ type RegisterForm = {
 const initialForm: RegisterForm = {
   name: '',
   email: '',
+  phone: '',
   password: '',
   confirmPassword: '',
   birthDay: '',
@@ -154,6 +157,8 @@ const RegisterPage = () => {
     if (logicalStep === 0) {
       if (!form.name.trim()) return 'Full name is required';
       if (!form.email.trim()) return 'Email is required';
+      if (!form.phone.trim()) return 'Phone number is required';
+      if (!/^\+?[0-9]{7,15}$/.test(form.phone.trim())) return 'Enter a valid phone number';
       if (!form.password) return 'Password is required';
       if (form.password.length < 6) return 'Password must be at least 6 characters';
       if (form.password !== form.confirmPassword) return 'Passwords do not match';
@@ -223,6 +228,7 @@ const RegisterPage = () => {
       const payload: any = {
         name: form.name.trim(),
         email: form.email.trim(),
+        phone: form.phone.trim(),
         password: form.password,
         address: form.address.trim(),
         birthDay: form.birthDay,
@@ -257,6 +263,7 @@ const RegisterPage = () => {
     <div className="form-grid">
       <Field label="Full Name" icon={User} name="name" value={form.name} onChange={updateField} placeholder="John Doe" />
       <Field label="Email Address" icon={Mail} name="email" type="email" value={form.email} onChange={updateField} placeholder="john@email.com" />
+      <Field label="Phone Number" icon={Phone} name="phone" value={form.phone} onChange={updateField} placeholder="+94771234567" />
       <Field label="Password" icon={Lock} name="password" type="password" value={form.password} onChange={updateField} placeholder="Minimum 6 characters" />
       <Field
         label="Confirm Password"
@@ -373,6 +380,7 @@ const RegisterPage = () => {
       <div className="summary-grid">
         <div><span>Name</span><strong>{form.name || '-'}</strong></div>
         <div><span>Email</span><strong>{form.email || '-'}</strong></div>
+        <div><span>Phone</span><strong>{form.phone || '-'}</strong></div>
         <div><span>Role</span><strong>{form.role}</strong></div>
         <div><span>Date of Birth</span><strong>{form.birthDay || '-'}</strong></div>
         <div><span>Gender</span><strong>{form.gender || '-'}</strong></div>
