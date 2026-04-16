@@ -24,27 +24,135 @@ const normalizeDoctorListFromAuthResponse = (payload) => {
   return [];
 };
 
+const textIncludes = (value, search) => {
+  return String(value || "")
+    .toLowerCase()
+    .includes(String(search || "").toLowerCase());
+};
+
 const normalizeDoctorObject = (doctor = {}) => {
+  const firstName = doctor.firstName || "";
+  const lastName = doctor.lastName || "";
+  const combinedName = `${firstName} ${lastName}`.trim();
+
+  const name =
+    doctor.name ||
+    doctor.fullName ||
+    doctor.doctorName ||
+    combinedName ||
+    "Doctor";
+
+  const specialty =
+    doctor.specialty ||
+    doctor.specialisation ||
+    doctor.specialization ||
+    doctor.category ||
+    doctor.department ||
+    "";
+
+  const fee =
+    doctor.consultationFee ||
+    doctor.fee ||
+    doctor.appointmentFee ||
+    doctor.sessionFee ||
+    null;
+
+  const experience =
+    doctor.experience ||
+    doctor.experienceYears ||
+    doctor.yearsOfExperience ||
+    null;
+
+  const qualification =
+    doctor.qualification ||
+    doctor.qualifications ||
+    doctor.degree ||
+    null;
+
+  const about =
+    doctor.about ||
+    doctor.bio ||
+    doctor.description ||
+    doctor.profileSummary ||
+    "";
+
+  const availability =
+    doctor.availability ||
+    doctor.availableSlots ||
+    doctor.schedule ||
+    [];
+
   return {
     id: doctor._id || doctor.id || doctor.userId || null,
     userId: doctor.userId || doctor._id || doctor.id || null,
-    name:
-      doctor.name ||
-      doctor.fullName ||
-      doctor.doctorName ||
-      `${doctor.firstName || ""} ${doctor.lastName || ""}`.trim() ||
-      "Doctor",
+    name,
     email: doctor.email || null,
-    specialty:
-      doctor.specialty ||
-      doctor.specialisation ||
-      doctor.specialization ||
-      doctor.category ||
-      null,
-    experience: doctor.experience || null,
+    phone: doctor.phone || doctor.mobile || null,
+    specialty,
+    experience,
+    qualification,
+    fee,
+    about,
     profileImage: doctor.profileImage || doctor.image || doctor.avatar || null,
+    availability,
+    hospital: doctor.hospital || doctor.clinic || doctor.workplace || null,
+    address: doctor.address || null,
     raw: doctor
   };
+};
+
+const fetchDoctorsFromAuthService = async (params) => {
+  if (!env.authServiceUrl) {
+    throw new AppError("AUTH_SERVICE_URL is not configured", 500);
+  }
+
+  try {
+    const response = await axios.get(`${env.authServiceUrl}/api/auth/doctors`, {
+      params,
+      timeout: 8000
+    });
+
+    return normalizeDoctorListFromAuthResponse(response.data).map(normalizeDoctorObject);
+  } catch (error) {
+    const upstreamMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "Failed to fetch doctors from auth-service";
+
+    throw new AppError(upstreamMessage, error.response?.status || 502);
+  }
+};
+
+const fetchDoctorByIdFromAuthService = async (doctorId) => {
+  if (!env.authServiceUrl) {
+    throw new AppError("AUTH_SERVICE_URL is not configured", 500);
+  }
+
+  try {
+    const response = await axios.get(
+      `${env.authServiceUrl}/api/auth/doctors/${doctorId}`,
+      {
+        timeout: 8000
+      }
+    );
+
+    const payload = response.data?.data || response.data;
+    return normalizeDoctorObject(payload);
+  } catch (error) {
+    // Fallback: if auth-service does not support /doctors/:id,
+    // fetch doctor list and find locally without changing auth-service.
+    if (error.response?.status === 404 || error.response?.status === 405) {
+      const doctors = await fetchDoctorsFromAuthService();
+      return doctors.find((doctor) => String(doctor.id) === String(doctorId)) || null;
+    }
+
+    const upstreamMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "Failed to fetch doctor details from auth-service";
+
+    throw new AppError(upstreamMessage, error.response?.status || 502);
+  }
 };
 
 const getModuleInfo = async () => {
@@ -56,6 +164,7 @@ const getModuleInfo = async () => {
       "health check",
       "auth-protected routes",
       "doctor fetch for patient",
+      "doctor detail fetch for booking page",
       "patient booking base route",
       "patient appointments fetch",
       "doctor appointments fetch",
@@ -63,9 +172,8 @@ const getModuleInfo = async () => {
       "meeting access validation"
     ],
     nextPhase: [
-      "doctor specialty filtering",
-      "doctor details enrichment",
       "slot availability logic",
+      "doctor schedule validation",
       "reschedule and cancellation enhancements",
       "payment integration"
     ]
@@ -92,36 +200,48 @@ const getAppointmentsForDoctor = async (doctorId) => {
   };
 };
 
-const getDoctorsForPatient = async ({ name = "", limit = 10 }) => {
-  if (!env.authServiceUrl) {
-    throw new AppError("AUTH_SERVICE_URL is not configured", 500);
-  }
-
+const getDoctorsForPatient = async ({ name = "", specialty = "", limit = 10 }) => {
   const safeLimit = Math.max(1, Math.min(Number(limit) || 10, 50));
 
-  try {
-    const response = await axios.get(`${env.authServiceUrl}/api/auth/doctors`, {
-      params: name ? { name } : undefined,
-      timeout: 8000
-    });
+  const doctors = await fetchDoctorsFromAuthService(name ? { name } : undefined);
 
-    const doctors = normalizeDoctorListFromAuthResponse(response.data)
-      .map(normalizeDoctorObject)
-      .filter((doctor) => doctor.id)
-      .slice(0, safeLimit);
+  const filteredDoctors = doctors
+    .filter((doctor) => doctor.id)
+    .filter((doctor) => {
+      if (!name) return true;
+      return textIncludes(doctor.name, name);
+    })
+    .filter((doctor) => {
+      if (!specialty) return true;
+      return textIncludes(doctor.specialty, specialty);
+    })
+    .slice(0, safeLimit);
 
-    return {
-      doctors,
-      totalDoctors: doctors.length
-    };
-  } catch (error) {
-    const upstreamMessage =
-      error.response?.data?.message ||
-      error.message ||
-      "Failed to fetch doctors from auth-service";
+  return {
+    filters: {
+      name,
+      specialty,
+      limit: safeLimit
+    },
+    doctors: filteredDoctors,
+    totalDoctors: filteredDoctors.length
+  };
+};
 
-    throw new AppError(upstreamMessage, error.response?.status || 502);
+const getDoctorDetailsForPatient = async ({ doctorId }) => {
+  if (!doctorId) {
+    throw new AppError("doctorId is required", 400);
   }
+
+  const doctor = await fetchDoctorByIdFromAuthService(doctorId);
+
+  if (!doctor) {
+    throw new AppError("Doctor not found", 404);
+  }
+
+  return {
+    doctor
+  };
 };
 
 const createAppointmentForPatient = async ({
@@ -194,18 +314,42 @@ const getAppointmentsForPatient = async (patientId) => {
   };
 };
 
-const getAppointmentById = async (appointmentId) => {
-  const appointment = await Appointment.findById(appointmentId).lean();
+const createMeetingForAppointment = async ({ appointmentId, doctorUserId }) => {
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    $or: [{ doctorUserId }, { doctorId: doctorUserId }]
+  });
 
   if (!appointment) {
-    throw new AppError('Appointment not found', 404);
+    throw new AppError("Appointment not found for this doctor", 404);
   }
 
-  return appointment;
+  const hasReadableRoomName =
+    Boolean(appointment.meetingRoomName) &&
+    appointment.meetingRoomName.includes("-with-");
+
+  if (!hasReadableRoomName) {
+    const slugify = (value = "") =>
+      String(value)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "")
+        .slice(0, 24);
+
+    const doctorSlug = slugify(appointment.doctorName) || "doctor";
+    const patientSlug = slugify(appointment.patientName) || "patient";
+    const suffix = String(appointment._id).slice(-6);
+
+    appointment.meetingRoomName = `${doctorSlug}-with-${patientSlug}-${suffix}`;
+    appointment.meetingCreatedAt = new Date();
+    await appointment.save();
+  }
+
+  return appointment.toObject();
 };
 
-const getAppointmentByRoomName = async (roomName) => {
-  const normalizedRoomName = String(roomName || '').trim();
+const getMeetingAccessForUser = async ({ roomName, userId, role }) => {
+  const normalizedRoomName = String(roomName || "").trim();
 
   if (!normalizedRoomName) {
     throw new AppError("roomName is required", 400);
@@ -216,24 +360,36 @@ const getAppointmentByRoomName = async (roomName) => {
   }).lean();
 
   if (!appointment) {
-    throw new AppError('Appointment not found for this room', 404);
+    throw new AppError("Meeting room not found", 404);
   }
 
-  return appointment;
-};
+  if (role === "doctor") {
+    const doctorMatches =
+      String(appointment.doctorUserId || appointment.doctorId || "") ===
+      String(userId || "");
 
-const updateMeetingRoomForAppointment = async ({ appointmentId, meetingRoomName }) => {
-  const appointment = await Appointment.findById(appointmentId);
+    if (!doctorMatches) {
+      throw new AppError("You are not assigned as doctor for this appointment", 403);
+    }
+  } else if (role === "patient") {
+    const patientMatches =
+      String(appointment.patientId || "") === String(userId || "");
 
-  if (!appointment) {
-    throw new AppError('Appointment not found', 404);
+    if (!patientMatches) {
+      throw new AppError("You are not assigned as patient for this appointment", 403);
+    }
+  } else {
+    throw new AppError("Role is not allowed for this meeting", 403);
   }
 
-  appointment.meetingRoomName = meetingRoomName;
-  appointment.meetingCreatedAt = new Date();
-  await appointment.save();
-
-  return appointment.toObject();
+  return {
+    roomName: normalizedRoomName,
+    appointmentId: String(appointment._id),
+    doctorId: String(appointment.doctorUserId || appointment.doctorId || ""),
+    patientId: String(appointment.patientId || ""),
+    doctorName: appointment.doctorName || "Doctor",
+    patientName: appointment.patientName || "Patient"
+  };
 };
 
 module.exports = {
@@ -241,9 +397,9 @@ module.exports = {
   getMyAppointmentAccessInfo,
   getAppointmentsForDoctor,
   getDoctorsForPatient,
+  getDoctorDetailsForPatient,
   createAppointmentForPatient,
   getAppointmentsForPatient,
-  getAppointmentById,
-  getAppointmentByRoomName,
-  updateMeetingRoomForAppointment
+  createMeetingForAppointment,
+  getMeetingAccessForUser
 };
