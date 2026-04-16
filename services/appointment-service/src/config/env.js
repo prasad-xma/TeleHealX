@@ -36,4 +36,8 @@ if (!env.authServiceUrl) {
   console.warn("⚠️ AUTH_SERVICE_URL is not configured for appointment-service");
 }
 
+if (!env.internalServiceSecret) {
+  console.warn("⚠️ INTERNAL_SERVICE_SECRET is not configured for appointment-service");
+}
+
 module.exports = env;
