@@ -3,30 +3,38 @@ const env = require("../config/env");
 
 const stripe = new Stripe(env.stripeSecretKey);
 
-const createCheckoutSession = async ({ amount, currency, metadata }) => {
+const createStripeCheckoutSession = async ({
+  paymentNumber,
+  appointmentId,
+  amount,
+  currency
+}) => {
   const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
     mode: "payment",
+    payment_method_types: ["card"],
     line_items: [
       {
         price_data: {
-          currency: currency,
+          currency,
           product_data: {
-            name: "Doctor Appointment Payment"
+            name: `TeleHealX Appointment Payment (${paymentNumber})`
           },
-          unit_amount: amount * 100
+          unit_amount: Math.round(Number(amount) * 100)
         },
         quantity: 1
       }
     ],
-    metadata,
-    success_url: `${env.clientUrl}/payments/success`,
-    cancel_url: `${env.clientUrl}/payments/fail`
+    success_url: `${env.clientUrl}/payment/success?session_id={CHECKOUT_SESSION_ID}&appointmentId=${appointmentId}`,
+    cancel_url: `${env.clientUrl}/payment/cancel?appointmentId=${appointmentId}`,
+    metadata: {
+      paymentNumber,
+      appointmentId
+    }
   });
 
   return session;
 };
 
 module.exports = {
-  createCheckoutSession
+  createStripeCheckoutSession
 };

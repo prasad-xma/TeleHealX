@@ -4,9 +4,22 @@ const errorMiddleware = (error, req, res, next) => {
   const statusCode = error.statusCode || 500;
   const message = error.message || "Internal Server Error";
 
-  console.error("❌ Payment Service Error:", error.message);
+  if (process.env.NODE_ENV !== "production") {
+    console.error("❌ Payment Service Error:", {
+      message: error.message,
+      stack: error.stack,
+      details: error.details || null
+    });
+  }
 
-  return sendError(res, message, statusCode);
+  return sendError(
+    res,
+    message,
+    statusCode,
+    process.env.NODE_ENV !== "production"
+      ? error.details || error.stack
+      : undefined
+  );
 };
 
 module.exports = errorMiddleware;

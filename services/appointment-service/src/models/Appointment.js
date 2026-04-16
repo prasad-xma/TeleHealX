@@ -1,18 +1,34 @@
 const mongoose = require("mongoose");
 
-const generateAppointmentNumber = () => {
-  const timestamp = Date.now().toString().slice(-8);
-  const random = Math.floor(1000 + Math.random() * 9000);
-  return `APT-${timestamp}-${random}`;
-};
+const appointmentStatusHistorySchema = new mongoose.Schema(
+  {
+    status: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    note: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    changedAt: {
+      type: Date,
+      default: Date.now
+    }
+  },
+  { _id: false }
+);
 
 const appointmentSchema = new mongoose.Schema(
   {
     appointmentNumber: {
       type: String,
+      required: true,
+      trim: true,
       unique: true,
-      index: true,
-      trim: true
+      sparse: true,
+      index: true
     },
     doctorId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -55,8 +71,42 @@ const appointmentSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["scheduled", "confirmed", "completed", "cancelled"],
-      default: "scheduled"
+      enum: [
+        "PENDING",
+        "PENDING_PAYMENT",
+        "CONFIRMED",
+        "CANCELLED",
+        "COMPLETED"
+      ],
+      default: "PENDING"
+    },
+    paymentMode: {
+      type: String,
+      enum: ["MANUAL", "ONLINE"],
+      default: "MANUAL"
+    },
+    paymentStatus: {
+      type: String,
+      enum: ["UNPAID", "PENDING", "PAID", "FAILED", "REFUNDED"],
+      default: "UNPAID"
+    },
+    consultationFee: {
+      type: Number,
+      default: null
+    },
+    cancellationReason: {
+      type: String,
+      trim: true,
+      default: ""
+    },
+    cancelledBy: {
+      type: String,
+      enum: ["PATIENT", "DOCTOR", "SYSTEM", ""],
+      default: ""
+    },
+    rescheduleCount: {
+      type: Number,
+      default: 0
     },
     notes: {
       type: String,
@@ -75,6 +125,10 @@ const appointmentSchema = new mongoose.Schema(
     meetingCreatedAt: {
       type: Date,
       default: null
+    },
+    statusHistory: {
+      type: [appointmentStatusHistorySchema],
+      default: []
     }
   },
   {
@@ -82,18 +136,10 @@ const appointmentSchema = new mongoose.Schema(
   }
 );
 
-// Auto-generate appointment number before validation/save
-appointmentSchema.pre("validate", function (next) {
-  if (!this.appointmentNumber) {
-    this.appointmentNumber = generateAppointmentNumber();
-  }
-  next();
-});
-
-// Useful indexes for common queries
 appointmentSchema.index({ doctorUserId: 1, date: 1, time: 1 });
 appointmentSchema.index({ patientId: 1, createdAt: -1 });
 appointmentSchema.index({ doctorUserId: 1, createdAt: -1 });
 appointmentSchema.index({ meetingRoomName: 1 });
+appointmentSchema.index({ status: 1, paymentStatus: 1 });
 
 module.exports = mongoose.model("Appointment", appointmentSchema);
