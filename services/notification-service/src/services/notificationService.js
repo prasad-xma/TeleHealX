@@ -30,6 +30,9 @@ class NotificationService {
         consultationLink: appointmentData.consultationLink
       };
 
+      const patientPhone = String(patientData.phone || '').trim();
+      const doctorPhone = String(doctorData.phone || '').trim();
+
       console.log('📧 [NOTIFICATION SERVICE] Sending email to patient...');
       // Send email to patient
       if (patientData.email) {
@@ -48,20 +51,24 @@ class NotificationService {
       }
 
       console.log('📱 [NOTIFICATION SERVICE] Sending SMS to patient...');
-      // Send SMS to patient
-      if (patientData.phone) {
+      // Send SMS only to the registered patient number.
+      // The free Twilio account is limited to a single verified recipient, so
+      // we avoid sending appointment-booking SMS to the doctor here.
+      if (patientPhone) {
         const patientSmsResult = await this.smsService.sendAppointmentBookingSMS(
-          patientData.phone,
+          patientPhone,
           patientNotificationData
         );
         notifications.push({
           type: 'sms',
           recipient: 'patient',
-          recipientPhone: patientData.phone,
+          recipientPhone: patientPhone,
           success: patientSmsResult.success,
           error: patientSmsResult.error
         });
         console.log('📱 [NOTIFICATION SERVICE] Patient SMS result:', patientSmsResult);
+      } else {
+        console.log('📱 [NOTIFICATION SERVICE] Skipping patient SMS because no registered phone number was provided');
       }
 
       console.log('📧 [NOTIFICATION SERVICE] Sending email to doctor...');
@@ -81,21 +88,8 @@ class NotificationService {
         console.log('📧 [NOTIFICATION SERVICE] Doctor email result:', doctorEmailResult);
       }
 
-      console.log('📱 [NOTIFICATION SERVICE] Sending SMS to doctor...');
-      // Send SMS to doctor
-      if (doctorData.phone) {
-        const doctorSmsResult = await this.smsService.sendAppointmentBookingSMS(
-          doctorData.phone,
-          patientNotificationData
-        );
-        notifications.push({
-          type: 'sms',
-          recipient: 'doctor',
-          recipientPhone: doctorData.phone,
-          success: doctorSmsResult.success,
-          error: doctorSmsResult.error
-        });
-        console.log('📱 [NOTIFICATION SERVICE] Doctor SMS result:', doctorSmsResult);
+      if (doctorPhone) {
+        console.log('📱 [NOTIFICATION SERVICE] Doctor SMS skipped for booking notifications (free-tier single-recipient mode)');
       }
 
       console.log('✅ [NOTIFICATION SERVICE] Appointment booking notifications completed');
