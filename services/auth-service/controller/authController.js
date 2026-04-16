@@ -54,6 +54,16 @@ const getPendingDoctors = async (req, res) => {
 	}
 };
 
+const getApprovedDoctors = async (req, res) => {
+	try {
+		const { name = '', limit = 5 } = req.query;
+		const data = await authService.getApprovedDoctors({ name, limit });
+		return res.status(200).json(data);
+	} catch (error) {
+		return res.status(400).json({ message: error.message });
+	}
+};
+
 module.exports = {
 	register,
 	login,
@@ -61,4 +71,5 @@ module.exports = {
 	getMe,
 	approveDoctor,
 	getPendingDoctors,
+	getApprovedDoctors,
 };

@@ -25,7 +25,7 @@ const DoctorDashboard = () => {
     { path: '/doctor/dashboard', label: 'Dashboard Overview', icon: LayoutDashboard },
     { path: '/doctor/profile', label: 'My Profile', icon: User },
     { path: '/doctor/availability', label: 'Availability', icon: Calendar },
-    { path: '/doctor/appointments', label: 'Appointments', icon: Calendar, disabled: true, badge: 'Coming Soon' },
+    { path: '/doctor/appointments', label: 'Appointments', icon: Calendar },
     { path: '/doctor/prescriptions', label: 'Prescriptions', icon: FileText },
     { path: '/doctor/patient-reports', label: 'Patient Reports', icon: Users },
     { path: '/doctor/telemedicine', label: 'Telemedicine', icon: Video, disabled: true, badge: 'Coming Soon' },
@@ -37,7 +37,10 @@ const DoctorDashboard = () => {
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fredoka+One&display=swap');
       `}</style>
 
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-blue-100 to-blue-50 font-['Nunito',sans-serif]">
+      <div
+        className="min-h-screen font-['Nunito',sans-serif]"
+        style={{ background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 50%, #eff6ff 100%)' }}
+      >
         {/* Mobile Menu Button */}
         <button
           onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -56,7 +59,10 @@ const DoctorDashboard = () => {
             {/* Brand Logo */}
             <div className="p-6 border-b border-blue-100">
               <Link to="/doctor/dashboard" className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg"
+                  style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)' }}
+                >
                   <Stethoscope size={20} className="text-white" />
                 </div>
                 <span className="text-xl font-bold font-['Fredoka_One',cursive] text-blue-900">TeleHealX</span>
@@ -85,9 +91,10 @@ const DoctorDashboard = () => {
                           onClick={() => setSidebarOpen(false)}
                           className={`flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
                             isActive
-                              ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                              ? 'text-white shadow-lg'
                               : 'text-gray-700 hover:bg-blue-50 hover:text-blue-700'
                           }`}
+                          style={isActive ? { background: 'linear-gradient(90deg, #3b82f6 0%, #2563eb 100%)' } : undefined}
                         >
                           <Icon size={20} />
                           <span>{item.label}</span>
@@ -100,7 +107,10 @@ const DoctorDashboard = () => {
             </nav>
 
             {/* User Info & Logout */}
-            <div className="p-4 border-t border-blue-100 bg-gradient-to-b from-blue-50 to-white">
+            <div
+              className="p-4 border-t border-blue-100"
+              style={{ background: 'linear-gradient(180deg, #eff6ff 0%, #ffffff 100%)' }}
+            >
               {user && (
                 <div className="mb-3 px-2">
                   <p className="font-semibold text-gray-900 text-sm">{user.name || 'Doctor'}</p>
