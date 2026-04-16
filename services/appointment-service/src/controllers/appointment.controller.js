@@ -137,6 +137,30 @@ const reschedulePatientAppointment = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Appointment rescheduled successfully");
 });
 
+const cancelDoctorAppointment = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const reason = typeof req.body.reason === "string" ? req.body.reason.trim() : "";
+
+  const result = await appointmentService.cancelDoctorAppointment({
+    appointmentId,
+    doctorId: req.user.userId,
+    reason
+  });
+
+  return sendSuccess(res, result, "Doctor cancelled appointment successfully");
+});
+
+const completeDoctorAppointment = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+
+  const result = await appointmentService.completeDoctorAppointment({
+    appointmentId,
+    doctorId: req.user.userId
+  });
+
+  return sendSuccess(res, result, "Appointment marked as completed");
+});
+
 const getMeetingAccess = asyncHandler(async (req, res) => {
   const roomName = typeof req.query.roomName === "string" ? req.query.roomName.trim() : "";
 
@@ -179,6 +203,8 @@ module.exports = {
   getPatientAppointmentById,
   cancelPatientAppointment,
   reschedulePatientAppointment,
+  cancelDoctorAppointment,
+  completeDoctorAppointment,
   createMeetingForDoctorAppointment,
   getMeetingAccess
 };
