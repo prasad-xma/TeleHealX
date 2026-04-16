@@ -5,8 +5,12 @@ const {
   getMyDoctorAppointments,
   getDoctorsForPatient,
   getDoctorDetailsForPatient,
+  getDoctorSlotsForPatient,
   createAppointmentForPatient,
   getMyPatientAppointments,
+  getPatientAppointmentById,
+  cancelPatientAppointment,
+  reschedulePatientAppointment,
   createMeetingForDoctorAppointment,
   getMeetingAccess
 } = require("../controllers/appointment.controller");
@@ -26,9 +30,13 @@ router.get("/meeting/access", protect, authorize("patient", "doctor"), getMeetin
 
 router.get("/patient/doctors", protect, authorize("patient"), getDoctorsForPatient);
 router.get("/patient/doctors/:doctorId", protect, authorize("patient"), getDoctorDetailsForPatient);
+router.get("/patient/doctors/:doctorId/slots", protect, authorize("patient"), getDoctorSlotsForPatient);
 
 router.get("/patient/me", protect, authorize("patient"), getMyPatientAppointments);
+router.get("/patient/me/:appointmentId", protect, authorize("patient"), getPatientAppointmentById);
 
 router.post("/patient/book", protect, authorize("patient"), createAppointmentForPatient);
+router.patch("/patient/:appointmentId/cancel", protect, authorize("patient"), cancelPatientAppointment);
+router.patch("/patient/:appointmentId/reschedule", protect, authorize("patient"), reschedulePatientAppointment);
 
 module.exports = router;

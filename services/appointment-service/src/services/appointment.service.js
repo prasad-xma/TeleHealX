@@ -139,8 +139,6 @@ const fetchDoctorByIdFromAuthService = async (doctorId) => {
     const payload = response.data?.data || response.data;
     return normalizeDoctorObject(payload);
   } catch (error) {
-    // Fallback: if auth-service does not support /doctors/:id,
-    // fetch doctor list and find locally without changing auth-service.
     if (error.response?.status === 404 || error.response?.status === 405) {
       const doctors = await fetchDoctorsFromAuthService();
       return doctors.find((doctor) => String(doctor.id) === String(doctorId)) || null;
@@ -155,27 +153,247 @@ const fetchDoctorByIdFromAuthService = async (doctorId) => {
   }
 };
 
+const isValidDateKey = (date) => {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(date || "").trim());
+};
+
+const getDayNameFromDate = (date) => {
+  const dayIndex = new Date(`${date}T00:00:00`).getDay();
+  const dayNames = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+  return dayNames[dayIndex];
+};
+
+const convertTimeStringToMinutes = (time) => {
+  const value = String(time || "").trim().toUpperCase();
+
+  const match12Hour = value.match(/^(\d{1,2}):(\d{2})\s?(AM|PM)$/);
+  if (match12Hour) {
+    let hours = Number(match12Hour[1]);
+    const minutes = Number(match12Hour[2]);
+    const meridiem = match12Hour[3];
+
+    if (meridiem === "AM" && hours === 12) hours = 0;
+    if (meridiem === "PM" && hours !== 12) hours += 12;
+
+    return hours * 60 + minutes;
+  }
+
+  const match24Hour = value.match(/^(\d{1,2}):(\d{2})$/);
+  if (match24Hour) {
+    const hours = Number(match24Hour[1]);
+    const minutes = Number(match24Hour[2]);
+    return hours * 60 + minutes;
+  }
+
+  return null;
+};
+
+const formatMinutesTo12Hour = (totalMinutes) => {
+  const hours24 = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  const meridiem = hours24 >= 12 ? "PM" : "AM";
+  const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+
+  return `${String(hours12).padStart(2, "0")}:${String(minutes).padStart(2, "0")} ${meridiem}`;
+};
+
+const buildSlotsFromRange = ({ start, end, stepMinutes = 30 }) => {
+  const startMinutes = convertTimeStringToMinutes(start);
+  const endMinutes = convertTimeStringToMinutes(end);
+
+  if (startMinutes === null || endMinutes === null || endMinutes <= startMinutes) {
+    return [];
+  }
+
+  const slots = [];
+  for (let current = startMinutes; current < endMinutes; current += stepMinutes) {
+    slots.push(formatMinutesTo12Hour(current));
+  }
+
+  return slots;
+};
+
+const getFallbackSlots = () => {
+  return buildSlotsFromRange({
+    start: "05:00 PM",
+    end: "09:00 PM",
+    stepMinutes: 30
+  });
+};
+
+const extractSlotsFromDoctorAvailability = (availability, date) => {
+  const fallbackSlots = getFallbackSlots();
+
+  if (!availability) {
+    return {
+      slots: fallbackSlots,
+      source: "TEMP_FALLBACK"
+    };
+  }
+
+  if (Array.isArray(availability) && availability.length === 0) {
+    return {
+      slots: fallbackSlots,
+      source: "TEMP_FALLBACK"
+    };
+  }
+
+  if (
+    Array.isArray(availability) &&
+    availability.every((item) => typeof item === "string")
+  ) {
+    return {
+      slots: availability,
+      source: "DOCTOR_DATA"
+    };
+  }
+
+  const dayKey = getDayNameFromDate(date);
+
+  if (Array.isArray(availability)) {
+    const matchingEntry = availability.find((item) => {
+      const entryDay =
+        String(item?.day || item?.dayName || item?.weekDay || "")
+          .trim()
+          .toLowerCase()
+          .slice(0, 3);
+
+      return entryDay === dayKey;
+    });
+
+    if (matchingEntry) {
+      if (Array.isArray(matchingEntry.slots) && matchingEntry.slots.length > 0) {
+        return {
+          slots: matchingEntry.slots,
+          source: "DOCTOR_DATA"
+        };
+      }
+
+      if (matchingEntry.start && matchingEntry.end) {
+        return {
+          slots: buildSlotsFromRange({
+            start: matchingEntry.start,
+            end: matchingEntry.end,
+            stepMinutes: Number(matchingEntry.stepMinutes || 30)
+          }),
+          source: "DOCTOR_DATA"
+        };
+      }
+    }
+  }
+
+  if (typeof availability === "object" && !Array.isArray(availability)) {
+    const dayValue = availability[dayKey];
+
+    if (Array.isArray(dayValue) && dayValue.length > 0) {
+      return {
+        slots: dayValue,
+        source: "DOCTOR_DATA"
+      };
+    }
+
+    if (dayValue && dayValue.start && dayValue.end) {
+      return {
+        slots: buildSlotsFromRange({
+          start: dayValue.start,
+          end: dayValue.end,
+          stepMinutes: Number(dayValue.stepMinutes || 30)
+        }),
+        source: "DOCTOR_DATA"
+      };
+    }
+  }
+
+  return {
+    slots: fallbackSlots,
+    source: "TEMP_FALLBACK"
+  };
+};
+
+const buildInitialStatusData = ({ paymentMode }) => {
+  if (paymentMode === "ONLINE") {
+    return {
+      status: "PENDING_PAYMENT",
+      paymentStatus: "PENDING",
+      historyNote: "Appointment created and waiting for online payment"
+    };
+  }
+
+  return {
+    status: "CONFIRMED",
+    paymentStatus: "UNPAID",
+    historyNote: "Appointment created with manual payment"
+  };
+};
+
+const appendStatusHistory = (appointment, status, note) => {
+  appointment.statusHistory.push({
+    status,
+    note,
+    changedAt: new Date()
+  });
+};
+
+const findPatientAppointmentOrThrow = async ({ appointmentId, patientId }) => {
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    patientId
+  });
+
+  if (!appointment) {
+    throw new AppError("Appointment not found for this patient", 404);
+  }
+
+  return appointment;
+};
+
+const generateAppointmentNumber = () => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const timestampPart = Date.now().toString().slice(-6);
+  const randomPart = Math.floor(100 + Math.random() * 900);
+
+  return `APT-${year}-${timestampPart}${randomPart}`;
+};
+
+const createUniqueAppointmentNumber = async () => {
+  let appointmentNumber = generateAppointmentNumber();
+  let exists = await Appointment.exists({ appointmentNumber });
+
+  while (exists) {
+    appointmentNumber = generateAppointmentNumber();
+    exists = await Appointment.exists({ appointmentNumber });
+  }
+
+  return appointmentNumber;
+};
+
 const getModuleInfo = async () => {
   return {
     module: "appointment-service",
     version: "v1",
-    status: "stable-foundation",
+    status: "booking-flow-ready",
     featuresAvailable: [
       "health check",
       "auth-protected routes",
       "doctor fetch for patient",
       "doctor detail fetch for booking page",
-      "patient booking base route",
-      "patient appointments fetch",
+      "doctor slot fetch for booking page",
+      "appointment booking with manual payment",
+      "appointment booking with online payment pending state",
+      "patient appointment list",
+      "patient appointment detail",
+      "patient cancel appointment",
+      "patient reschedule appointment",
       "doctor appointments fetch",
       "doctor meeting room creation",
       "meeting access validation"
     ],
     nextPhase: [
-      "slot availability logic",
-      "doctor schedule validation",
-      "reschedule and cancellation enhancements",
-      "payment integration"
+      "doctor status actions",
+      "payment service integration",
+      "payment status sync",
+      "gateway and frontend integration"
     ]
   };
 };
@@ -244,6 +462,71 @@ const getDoctorDetailsForPatient = async ({ doctorId }) => {
   };
 };
 
+const getDoctorSlotsForPatient = async ({ doctorId, date }) => {
+  if (!doctorId) {
+    throw new AppError("doctorId is required", 400);
+  }
+
+  if (!date) {
+    throw new AppError("date is required", 400);
+  }
+
+  if (!isValidDateKey(date)) {
+    throw new AppError("date must be in YYYY-MM-DD format", 400);
+  }
+
+  const doctor = await fetchDoctorByIdFromAuthService(doctorId);
+
+  if (!doctor) {
+    throw new AppError("Doctor not found", 404);
+  }
+
+  const { slots, source } = extractSlotsFromDoctorAvailability(doctor.availability, date);
+
+  const bookedAppointments = await Appointment.find({
+    $or: [{ doctorUserId: doctorId }, { doctorId }],
+    date,
+    status: { $ne: "CANCELLED" }
+  })
+    .select("time status")
+    .lean();
+
+  const bookedTimeSet = new Set(
+    bookedAppointments.map((item) => String(item.time || "").trim())
+  );
+
+  const slotItems = slots.map((time) => {
+    const normalizedTime = String(time || "").trim();
+    const isBooked = bookedTimeSet.has(normalizedTime);
+
+    return {
+      time: normalizedTime,
+      status: isBooked ? "BOOKED" : "AVAILABLE",
+      isAvailable: !isBooked
+    };
+  });
+
+  return {
+    doctor: {
+      id: doctor.id,
+      name: doctor.name,
+      specialty: doctor.specialty,
+      fee: doctor.fee,
+      profileImage: doctor.profileImage
+    },
+    date,
+    slotSource: source,
+    note:
+      source === "TEMP_FALLBACK"
+        ? "Temporary fallback slots are used because structured doctor availability is not fully available from upstream service yet."
+        : "Slots generated from doctor availability data.",
+    slots: slotItems,
+    totalSlots: slotItems.length,
+    bookedSlots: slotItems.filter((slot) => slot.status === "BOOKED").length,
+    availableSlots: slotItems.filter((slot) => slot.status === "AVAILABLE").length
+  };
+};
+
 const createAppointmentForPatient = async ({
   patientId,
   patientName,
@@ -253,7 +536,9 @@ const createAppointmentForPatient = async ({
   time,
   type,
   notes,
-  isVideoConsultation
+  isVideoConsultation,
+  paymentMode,
+  consultationFee
 }) => {
   if (!doctorId) {
     throw new AppError("Doctor is required", 400);
@@ -267,6 +552,10 @@ const createAppointmentForPatient = async ({
     throw new AppError("Date and time are required", 400);
   }
 
+  if (!isValidDateKey(date)) {
+    throw new AppError("date must be in YYYY-MM-DD format", 400);
+  }
+
   if (!mongoose.Types.ObjectId.isValid(String(doctorId))) {
     throw new AppError("Invalid doctorId", 400);
   }
@@ -275,10 +564,17 @@ const createAppointmentForPatient = async ({
     throw new AppError("Invalid patientId", 400);
   }
 
+  const normalizedPaymentMode =
+    String(paymentMode || "MANUAL").trim().toUpperCase();
+
+  if (!["MANUAL", "ONLINE"].includes(normalizedPaymentMode)) {
+    throw new AppError("paymentMode must be MANUAL or ONLINE", 400);
+  }
+
   const existingAppointment = await Appointment.findOne({
     $or: [
-      { doctorUserId: doctorId, date, time, status: { $ne: "cancelled" } },
-      { doctorId, date, time, status: { $ne: "cancelled" } }
+      { doctorUserId: doctorId, date, time, status: { $ne: "CANCELLED" } },
+      { doctorId, date, time, status: { $ne: "CANCELLED" } }
     ]
   }).lean();
 
@@ -286,7 +582,14 @@ const createAppointmentForPatient = async ({
     throw new AppError("Selected doctor slot is already booked", 409);
   }
 
+  const initialStatusData = buildInitialStatusData({
+    paymentMode: normalizedPaymentMode
+  });
+
+  const appointmentNumber = await createUniqueAppointmentNumber();
+
   const created = await Appointment.create({
+    appointmentNumber,
     doctorId,
     doctorUserId: doctorId,
     patientId,
@@ -297,7 +600,20 @@ const createAppointmentForPatient = async ({
     type: type || "consultation",
     notes: notes || "",
     isVideoConsultation: Boolean(isVideoConsultation),
-    status: "scheduled"
+    paymentMode: normalizedPaymentMode,
+    paymentStatus: initialStatusData.paymentStatus,
+    status: initialStatusData.status,
+    consultationFee:
+      consultationFee !== undefined && consultationFee !== null
+        ? Number(consultationFee)
+        : null,
+    statusHistory: [
+      {
+        status: initialStatusData.status,
+        note: initialStatusData.historyNote,
+        changedAt: new Date()
+      }
+    ]
   });
 
   return created;
@@ -305,12 +621,127 @@ const createAppointmentForPatient = async ({
 
 const getAppointmentsForPatient = async (patientId) => {
   const appointments = await Appointment.find({ patientId })
-    .sort({ date: 1, time: 1 })
+    .sort({ createdAt: -1 })
     .lean();
 
   return {
     appointments,
     totalAppointments: appointments.length
+  };
+};
+
+const getPatientAppointmentById = async ({ appointmentId, patientId }) => {
+  const appointment = await findPatientAppointmentOrThrow({
+    appointmentId,
+    patientId
+  });
+
+  return {
+    appointment
+  };
+};
+
+const cancelPatientAppointment = async ({ appointmentId, patientId, reason }) => {
+  const appointment = await findPatientAppointmentOrThrow({
+    appointmentId,
+    patientId
+  });
+
+  if (appointment.status === "CANCELLED") {
+    throw new AppError("Appointment is already cancelled", 400);
+  }
+
+  if (appointment.status === "COMPLETED") {
+    throw new AppError("Completed appointment cannot be cancelled", 400);
+  }
+
+  appointment.status = "CANCELLED";
+  appointment.cancellationReason = reason || "Cancelled by patient";
+  appointment.cancelledBy = "PATIENT";
+
+  appendStatusHistory(
+    appointment,
+    "CANCELLED",
+    reason || "Appointment cancelled by patient"
+  );
+
+  await appointment.save();
+
+  return {
+    appointment
+  };
+};
+
+const reschedulePatientAppointment = async ({
+  appointmentId,
+  patientId,
+  date,
+  time
+}) => {
+  if (!date || !time) {
+    throw new AppError("date and time are required", 400);
+  }
+
+  if (!isValidDateKey(date)) {
+    throw new AppError("date must be in YYYY-MM-DD format", 400);
+  }
+
+  const appointment = await findPatientAppointmentOrThrow({
+    appointmentId,
+    patientId
+  });
+
+  if (appointment.status === "CANCELLED") {
+    throw new AppError("Cancelled appointment cannot be rescheduled", 400);
+  }
+
+  if (appointment.status === "COMPLETED") {
+    throw new AppError("Completed appointment cannot be rescheduled", 400);
+  }
+
+  if (appointment.rescheduleCount >= env.maxRescheduleCount) {
+    throw new AppError(
+      `Maximum reschedule count reached (${env.maxRescheduleCount})`,
+      400
+    );
+  }
+
+  const conflictingAppointment = await Appointment.findOne({
+    _id: { $ne: appointment._id },
+    $or: [
+      { doctorUserId: appointment.doctorUserId, date, time, status: { $ne: "CANCELLED" } },
+      { doctorId: appointment.doctorId, date, time, status: { $ne: "CANCELLED" } }
+    ]
+  }).lean();
+
+  if (conflictingAppointment) {
+    throw new AppError("Selected doctor slot is already booked", 409);
+  }
+
+  appointment.date = String(date).trim();
+  appointment.time = String(time).trim();
+  appointment.rescheduleCount += 1;
+
+  if (appointment.paymentMode === "ONLINE" && appointment.paymentStatus !== "PAID") {
+    appointment.status = "PENDING_PAYMENT";
+    appendStatusHistory(
+      appointment,
+      "PENDING_PAYMENT",
+      "Appointment rescheduled and still waiting for online payment"
+    );
+  } else {
+    appointment.status = "CONFIRMED";
+    appendStatusHistory(
+      appointment,
+      "CONFIRMED",
+      "Appointment rescheduled successfully"
+    );
+  }
+
+  await appointment.save();
+
+  return {
+    appointment
   };
 };
 
@@ -398,8 +829,12 @@ module.exports = {
   getAppointmentsForDoctor,
   getDoctorsForPatient,
   getDoctorDetailsForPatient,
+  getDoctorSlotsForPatient,
   createAppointmentForPatient,
   getAppointmentsForPatient,
+  getPatientAppointmentById,
+  cancelPatientAppointment,
+  reschedulePatientAppointment,
   createMeetingForAppointment,
   getMeetingAccessForUser
 };
