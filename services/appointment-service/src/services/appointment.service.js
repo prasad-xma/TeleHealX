@@ -194,42 +194,18 @@ const getAppointmentsForPatient = async (patientId) => {
   };
 };
 
-const createMeetingForAppointment = async ({ appointmentId, doctorUserId }) => {
-  const appointment = await Appointment.findOne({
-    _id: appointmentId,
-    $or: [{ doctorUserId }, { doctorId: doctorUserId }]
-  });
+const getAppointmentById = async (appointmentId) => {
+  const appointment = await Appointment.findById(appointmentId).lean();
 
   if (!appointment) {
-    throw new AppError("Appointment not found for this doctor", 404);
+    throw new AppError('Appointment not found', 404);
   }
 
-  const hasReadableRoomName =
-    Boolean(appointment.meetingRoomName) &&
-    appointment.meetingRoomName.includes("-with-");
-
-  if (!hasReadableRoomName) {
-    const slugify = (value = "") =>
-      String(value)
-        .toLowerCase()
-        .replace(/[^a-z0-9]+/g, "-")
-        .replace(/^-+|-+$/g, "")
-        .slice(0, 24);
-
-    const doctorSlug = slugify(appointment.doctorName) || "doctor";
-    const patientSlug = slugify(appointment.patientName) || "patient";
-    const suffix = String(appointment._id).slice(-6);
-
-    appointment.meetingRoomName = `${doctorSlug}-with-${patientSlug}-${suffix}`;
-    appointment.meetingCreatedAt = new Date();
-    await appointment.save();
-  }
-
-  return appointment.toObject();
+  return appointment;
 };
 
-const getMeetingAccessForUser = async ({ roomName, userId, role }) => {
-  const normalizedRoomName = String(roomName || "").trim();
+const getAppointmentByRoomName = async (roomName) => {
+  const normalizedRoomName = String(roomName || '').trim();
 
   if (!normalizedRoomName) {
     throw new AppError("roomName is required", 400);
@@ -240,36 +216,24 @@ const getMeetingAccessForUser = async ({ roomName, userId, role }) => {
   }).lean();
 
   if (!appointment) {
-    throw new AppError("Meeting room not found", 404);
+    throw new AppError('Appointment not found for this room', 404);
   }
 
-  if (role === "doctor") {
-    const doctorMatches =
-      String(appointment.doctorUserId || appointment.doctorId || "") ===
-      String(userId || "");
+  return appointment;
+};
 
-    if (!doctorMatches) {
-      throw new AppError("You are not assigned as doctor for this appointment", 403);
-    }
-  } else if (role === "patient") {
-    const patientMatches =
-      String(appointment.patientId || "") === String(userId || "");
+const updateMeetingRoomForAppointment = async ({ appointmentId, meetingRoomName }) => {
+  const appointment = await Appointment.findById(appointmentId);
 
-    if (!patientMatches) {
-      throw new AppError("You are not assigned as patient for this appointment", 403);
-    }
-  } else {
-    throw new AppError("Role is not allowed for this meeting", 403);
+  if (!appointment) {
+    throw new AppError('Appointment not found', 404);
   }
 
-  return {
-    roomName: normalizedRoomName,
-    appointmentId: String(appointment._id),
-    doctorId: String(appointment.doctorUserId || appointment.doctorId || ""),
-    patientId: String(appointment.patientId || ""),
-    doctorName: appointment.doctorName || "Doctor",
-    patientName: appointment.patientName || "Patient"
-  };
+  appointment.meetingRoomName = meetingRoomName;
+  appointment.meetingCreatedAt = new Date();
+  await appointment.save();
+
+  return appointment.toObject();
 };
 
 module.exports = {
@@ -279,6 +243,7 @@ module.exports = {
   getDoctorsForPatient,
   createAppointmentForPatient,
   getAppointmentsForPatient,
-  createMeetingForAppointment,
-  getMeetingAccessForUser
+  getAppointmentById,
+  getAppointmentByRoomName,
+  updateMeetingRoomForAppointment
 };
