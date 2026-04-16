@@ -16,7 +16,7 @@ const ErrorBoundary = ({ children }: { children: React.ReactNode }) => {
 
 // Lazy loaded components for better performance
 const LoginPage = lazy(() => import('./pages/auth/LoginPage'));
-const RegisterPage = lazy(() => import('./pages/auth/RegisterPage'));
+const RegisterPage = lazy(() => import('./pages/auth/RegisterPage.tsx'));
 const LandingPage = lazy(() => import('./pages/LandingPage'));
 const UserDashboardPage = lazy(() => import('./pages/UserDashboardPage'));
 const SymptomCheckerPage = lazy(() => import('./pages/SymptomCheckerPage'));
