@@ -13,6 +13,7 @@ const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:5001';
 const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5002';
 const patientServiceUrl = process.env.PATIENT_SERVICE_URL || 'http://localhost:5015';
 const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:5004';
+const appointmentServiceUrl = process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5007';
 const telemedicineServiceUrl = process.env.TELEMEDICINE_SERVICE_URL || 'http://localhost:5005';
 
 const createServiceProxy = (target, prefix) =>
@@ -40,6 +41,11 @@ app.use(
 app.use(
   '/api/ai',
   createServiceProxy(aiServiceUrl, '/api/ai')
+);
+
+app.use(
+  '/api/appointments',
+  createServiceProxy(appointmentServiceUrl, '/api/appointments')
 );
 
 app.use(
