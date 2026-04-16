@@ -3,7 +3,7 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const env = {
-  port: process.env.PORT || 5005,
+  port: process.env.PORT || 5007,
   mongoUri: process.env.MONGODB_URI || "",
   jwtSecret: process.env.JWT_SECRET || "",
   authServiceUrl: process.env.AUTH_SERVICE_URL || "",
