@@ -1,13 +1,16 @@
 const express = require('express');
 const router = express.Router();
-const { patientAuth } = require('../middleware/auth');
+const patientAuth = require('../middleware/auth');
 const {
     getMedicalHistory,
+    addMedicalHistory,
     uploadMedicalReport,
     getMedicalReports,
     deleteMedicalReport,
+    addPrescription,
     getPrescriptions,
     getPrescriptionById,
+    getProfile,
     updateProfile
 } = require('../controller/patientController');
 
@@ -15,6 +18,7 @@ const {
 router.use(patientAuth);
 
 // Medical History
+router.post('/medical-history', addMedicalHistory);
 router.get('/medical-history', getMedicalHistory);
 
 // Medical Reports
@@ -23,10 +27,12 @@ router.get('/reports', getMedicalReports);
 router.delete('/reports/:id', deleteMedicalReport);
 
 // Prescriptions
+router.post('/prescriptions', addPrescription);
 router.get('/prescriptions', getPrescriptions);
 router.get('/prescriptions/:id', getPrescriptionById);
 
 // Profile Management
+router.get('/profile', getProfile);
 router.put('/profile', updateProfile);
 
 module.exports = router;

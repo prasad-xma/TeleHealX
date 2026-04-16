@@ -1,18 +1,19 @@
 
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import LoginPage from './pages/LoginPage';
-import RegisterPage from './pages/RegisterPage';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
 import LandingPage from './pages/LandingPage';
-import PatientDashboard from './pages/PatientDashboard';
-import UploadReport from './pages/UploadReport';
-import ProfileManagement from './pages/ProfileManagement';
-import MedicalReportsManagement from './pages/MedicalReportsManagement';
-import PrescriptionManagement from './pages/PrescriptionManagement';
-import AppointmentBooking from './pages/AppointmentBooking';
-import AdminDashboard from './pages/AdminDashboard';
-import DoctorRegistration from './pages/DoctorRegistration';
-import DoctorLoginBlocked from './pages/DoctorLoginBlocked';
+import PatientDashboard from './pages/patient/PatientDashboard';
+import UploadReport from './pages/patient/UploadReport';
+import ProfileManagement from './pages/patient/ProfileManagement';
+import MedicalHistoryManagement from './pages/patient/MedicalHistoryManagement';
+import MedicalReportsManagement from './pages/patient/MedicalReportsManagement';
+import PrescriptionManagement from './pages/patient/PrescriptionManagement';
+import AppointmentBooking from './pages/patient/AppointmentBooking';
+import AdminDashboard from './pages/admin/AdminDashboard';
+import DoctorRegistration from './pages/admin/DoctorRegistration';
+import DoctorLoginBlocked from './pages/auth/DoctorLoginBlocked';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/dashboard" element={<PatientDashboard />} />
         <Route path="/upload-report" element={<UploadReport />} />
         <Route path="/profile" element={<ProfileManagement />} />
+        <Route path="/medical-history" element={<MedicalHistoryManagement />} />
         <Route path="/medical-reports" element={<MedicalReportsManagement />} />
         <Route path="/prescriptions" element={<PrescriptionManagement />} />
         <Route path="/appointments" element={<AppointmentBooking />} />

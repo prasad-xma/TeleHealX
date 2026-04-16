@@ -8,8 +8,7 @@ const prescriptionSchema = new mongoose.Schema({
     },
     doctorId: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
+        ref: 'User'
     },
     diagnosis: {
         type: String,
@@ -45,8 +44,7 @@ const prescriptionSchema = new mongoose.Schema({
         default: Date.now
     },
     validUntil: {
-        type: Date,
-        required: true
+        type: Date
     },
     isActive: {
         type: Boolean,

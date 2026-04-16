@@ -31,6 +31,15 @@ const upload = multer({
     }
 });
 
+const addMedicalHistory = async (req, res) => {
+    try {
+        const medicalRecord = await patientService.addMedicalHistory(req.user._id, req.body);
+        res.status(201).json(medicalRecord);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
 const getMedicalHistory = async (req, res) => {
     try {
         const records = await patientService.getMedicalHistory(req.user._id);
@@ -93,8 +102,26 @@ const getPrescriptions = async (req, res) => {
 
 const getPrescriptionById = async (req, res) => {
     try {
-        const prescription = await patientService.getPrescriptionById(req.params.id, req.user._id);
+        const prescription = await patientService.getPrescriptionById(req.user._id, req.params.id);
         res.status(200).json(prescription);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+const addPrescription = async (req, res) => {
+    try {
+        const prescription = await patientService.addPrescription(req.user._id, req.body);
+        res.status(201).json(prescription);
+    } catch (error) {
+        res.status(400).json({ message: error.message });
+    }
+};
+
+const getProfile = async (req, res) => {
+    try {
+        const profile = await patientService.getProfile(req.user._id);
+        res.status(200).json(profile);
     } catch (error) {
         res.status(400).json({ message: error.message });
     }
@@ -110,11 +137,14 @@ const updateProfile = async (req, res) => {
 };
 
 module.exports = {
+    addMedicalHistory,
     getMedicalHistory,
     uploadMedicalReport: [upload.single('medicalReport'), uploadMedicalReport],
     getMedicalReports,
     deleteMedicalReport,
+    addPrescription,
     getPrescriptions,
     getPrescriptionById,
+    getProfile,
     updateProfile
 };
