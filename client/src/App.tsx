@@ -9,6 +9,7 @@ import PrescriptionsPage from './pages/doctor/PrescriptionsPage';
 import PatientReportsPage from './pages/doctor/PatientReportsPage';
 import LandingPage from './pages/LandingPage';
 import UserDashboardPage from './pages/UserDashboardPage';
+import SymptomCheckerPage from './pages/SymptomCheckerPage';
 
 const ProtectedRoute = () => {
   const userStr = localStorage.getItem('user');
@@ -35,7 +36,9 @@ function App() {
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/user-dashboard" element={<UserDashboardPage />} />
         
-        {/* Doctor Portal Routes */}
+        <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
+
+        
         <Route element={<ProtectedRoute />}>
           <Route path="/doctor" element={<DoctorDashboard />}>
             <Route path="dashboard" element={<DoctorOverviewPage />} />
@@ -48,6 +51,7 @@ function App() {
       </Routes>
     </Router>
   );
+}
 }
 
 export default App;
