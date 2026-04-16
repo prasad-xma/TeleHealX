@@ -193,6 +193,55 @@ const getApprovedDoctors = async ({ name = '', limit = 5 }) => {
 	}));
 };
 
+const getDoctorById = async (doctorId) => {
+  console.log('🔍 [AUTH SERVICE] Fetching doctor by ID:', doctorId);
+
+  const doctor = await User.findOne({
+    _id: doctorId,
+    role: 'doctor',
+    isApproved: true
+  }).select('name email phone role isApproved doctorInfo');
+
+  if (!doctor) {
+    console.error('❌ [AUTH SERVICE] Doctor not found:', doctorId);
+    throw new Error('Doctor not found');
+  }
+
+  console.log('✅ [AUTH SERVICE] Doctor found:', { name: doctor.name, email: doctor.email });
+  return {
+    _id: doctor._id,
+    id: doctor._id,
+    name: doctor.name,
+    email: doctor.email,
+    phone: doctor.phone,
+    role: doctor.role,
+    isApproved: doctor.isApproved,
+    specialization: doctor.doctorInfo?.specialization || 'General Medicine'
+  };
+};
+
+const getUserById = async (userId) => {
+  console.log('🔍 [AUTH SERVICE] Fetching user by ID:', userId);
+
+  const user = await User.findById(userId).select('name email phone role isApproved');
+
+  if (!user) {
+    console.error('❌ [AUTH SERVICE] User not found:', userId);
+    throw new Error('User not found');
+  }
+
+  console.log('✅ [AUTH SERVICE] User found:', { name: user.name, email: user.email });
+  return {
+    _id: user._id,
+    id: user._id,
+    name: user.name,
+    email: user.email,
+    phone: user.phone,
+    role: user.role,
+    isApproved: user.isApproved
+  };
+};
+
 module.exports = {
 	register,
 	login,
@@ -201,4 +250,6 @@ module.exports = {
 	approveDoctor,
 	getPendingDoctorApplications,
 	getApprovedDoctors,
+	getDoctorById,
+	getUserById,
 };

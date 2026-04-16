@@ -28,15 +28,22 @@ const getDoctorsForPatient = asyncHandler(async (req, res) => {
 });
 
 const createAppointmentForPatient = asyncHandler(async (req, res) => {
+  console.log('📨 [APPOINTMENT CONTROLLER] Received appointment booking request');
+  console.log('📨 [APPOINTMENT CONTROLLER] Request body:', req.body);
+  console.log('📨 [APPOINTMENT CONTROLLER] User from token:', req.user);
+
   const { doctorId, doctorName, date, time, type, notes, isVideoConsultation, patientName } = req.body;
 
+  console.log('🔍 [APPOINTMENT CONTROLLER] Validating request data...');
   if (!doctorId || !date || !time) {
+    console.error('❌ [APPOINTMENT CONTROLLER] Missing required fields:', { doctorId, date, time });
     return res.status(400).json({
       success: false,
       message: 'doctorId, date and time are required'
     });
   }
 
+  console.log('⚙️ [APPOINTMENT CONTROLLER] Calling appointment service...');
   const result = await appointmentService.createAppointmentForPatient({
     patientId: req.user.userId,
     patientName: patientName || 'Patient',
@@ -49,6 +56,7 @@ const createAppointmentForPatient = asyncHandler(async (req, res) => {
     isVideoConsultation
   });
 
+  console.log('✅ [APPOINTMENT CONTROLLER] Appointment created successfully:', result._id);
   return sendSuccess(res, result, 'Appointment created successfully', 201);
 });
 
@@ -88,6 +96,26 @@ const createMeetingForDoctorAppointment = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, 'Meeting created successfully');
 });
 
+const completeConsultation = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const { prescriptionIssued = false } = req.body;
+
+  if (!appointmentId) {
+    return res.status(400).json({
+      success: false,
+      message: 'appointmentId is required'
+    });
+  }
+
+  const result = await appointmentService.completeConsultation({
+    appointmentId,
+    doctorUserId: req.user.userId,
+    prescriptionIssued
+  });
+
+  return sendSuccess(res, result, 'Consultation completed successfully');
+});
+
 module.exports = {
   getAppointmentModuleInfo,
   getMyAppointmentAccessInfo,
@@ -96,5 +124,6 @@ module.exports = {
   createAppointmentForPatient,
   getMyPatientAppointments,
   createMeetingForDoctorAppointment,
-  getMeetingAccess
+  getMeetingAccess,
+  completeConsultation
 };
