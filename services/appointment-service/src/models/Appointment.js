@@ -24,13 +24,11 @@ const appointmentSchema = new mongoose.Schema(
   {
     appointmentNumber: {
       type: String,
+      required: true,
       trim: true,
       unique: true,
       sparse: true,
       index: true
-      required: true
-      index: true,
-      trim: true
     },
     doctorId: {
       type: mongoose.Schema.Types.ObjectId,

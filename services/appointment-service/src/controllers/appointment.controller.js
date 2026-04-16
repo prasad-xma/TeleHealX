@@ -56,11 +56,10 @@ const getDoctorSlotsForPatient = asyncHandler(async (req, res) => {
 });
 
 const createAppointmentForPatient = asyncHandler(async (req, res) => {
-  console.log('📨 [APPOINTMENT CONTROLLER] Received appointment booking request');
-  console.log('📨 [APPOINTMENT CONTROLLER] Request body:', req.body);
-  console.log('📨 [APPOINTMENT CONTROLLER] User from token:', req.user);
+  console.log('[APPOINTMENT CONTROLLER] Received appointment booking request');
+  console.log('[APPOINTMENT CONTROLLER] Request body:', req.body);
+  console.log('[APPOINTMENT CONTROLLER] User from token:', req.user);
 
-  const { doctorId, doctorName, date, time, type, notes, isVideoConsultation, patientName } = req.body;
   const {
     doctorId,
     doctorName,
@@ -74,16 +73,16 @@ const createAppointmentForPatient = asyncHandler(async (req, res) => {
     consultationFee
   } = req.body;
 
-  console.log('🔍 [APPOINTMENT CONTROLLER] Validating request data...');
+  console.log('[APPOINTMENT CONTROLLER] Validating request data...');
   if (!doctorId || !date || !time) {
-    console.error('❌ [APPOINTMENT CONTROLLER] Missing required fields:', { doctorId, date, time });
+    console.error('[APPOINTMENT CONTROLLER] Missing required fields:', { doctorId, date, time });
     return res.status(400).json({
       success: false,
       message: "doctorId, date and time are required"
     });
   }
 
-  console.log('⚙️ [APPOINTMENT CONTROLLER] Calling appointment service...');
+  console.log('[APPOINTMENT CONTROLLER] Calling appointment service...');
   const result = await appointmentService.createAppointmentForPatient({
     patientId: req.user.userId,
     patientName: patientName || "Patient",
@@ -98,9 +97,8 @@ const createAppointmentForPatient = asyncHandler(async (req, res) => {
     consultationFee
   });
 
-  console.log('✅ [APPOINTMENT CONTROLLER] Appointment created successfully:', result._id);
+  console.log('[APPOINTMENT CONTROLLER] Appointment created successfully:', result._id);
   return sendSuccess(res, result, 'Appointment created successfully', 201);
-  return sendSuccess(res, result, "Appointment created successfully", 201);
 });
 
 const getMyPatientAppointments = asyncHandler(async (req, res) => {
@@ -252,11 +250,6 @@ module.exports = {
   completeDoctorAppointment,
   updateAppointmentPaymentStatusInternal,
   createMeetingForDoctorAppointment,
-  getMeetingAccess
-  createMeetingForDoctorAppointment,
   getMeetingAccess,
   completeConsultation
-  getAppointmentById,
-  getAppointmentByRoomName,
-  updateMeetingRoomForAppointment
 };
