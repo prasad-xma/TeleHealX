@@ -58,6 +58,18 @@ const getMyPatientAppointments = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, 'Patient appointments fetched successfully');
 });
 
+const getMeetingAccess = asyncHandler(async (req, res) => {
+  const { roomName = '' } = req.query;
+
+  const result = await appointmentService.getMeetingAccessForUser({
+    roomName,
+    userId: req.user.userId,
+    role: req.user.role
+  });
+
+  return sendSuccess(res, result, 'Meeting access validated successfully');
+});
+
 const createMeetingForDoctorAppointment = asyncHandler(async (req, res) => {
   const { appointmentId } = req.params;
 
@@ -83,5 +95,6 @@ module.exports = {
   getDoctorsForPatient,
   createAppointmentForPatient,
   getMyPatientAppointments,
-  createMeetingForDoctorAppointment
+  createMeetingForDoctorAppointment,
+  getMeetingAccess
 };

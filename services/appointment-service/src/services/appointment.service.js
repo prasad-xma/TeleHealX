@@ -1,5 +1,6 @@
 const Appointment = require('../models/Appointment');
 const axios = require('axios');
+const AppError = require('../utils/appError');
 const env = require('../config/env');
 
 const getModuleInfo = async () => {
@@ -95,13 +96,67 @@ const createMeetingForAppointment = async ({ appointmentId, doctorUserId }) => {
     throw new Error('Appointment not found for this doctor');
   }
 
-  if (!appointment.meetingRoomName) {
-    appointment.meetingRoomName = `meeting_${appointment._id}`;
+  const hasReadableRoomName =
+    Boolean(appointment.meetingRoomName) &&
+    appointment.meetingRoomName.includes('-with-');
+
+  if (!hasReadableRoomName) {
+    const slugify = (value = '') =>
+      String(value)
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 24);
+
+    const doctorSlug = slugify(appointment.doctorName) || 'doctor';
+    const patientSlug = slugify(appointment.patientName) || 'patient';
+    const suffix = String(appointment._id).slice(-6);
+
+    appointment.meetingRoomName = `${doctorSlug}-with-${patientSlug}-${suffix}`;
     appointment.meetingCreatedAt = new Date();
     await appointment.save();
   }
 
   return appointment.toObject();
+};
+
+const getMeetingAccessForUser = async ({ roomName, userId, role }) => {
+  const normalizedRoomName = String(roomName || '').trim();
+
+  if (!normalizedRoomName) {
+    throw new AppError('roomName is required', 400);
+  }
+
+  const appointment = await Appointment.findOne({ meetingRoomName: normalizedRoomName }).lean();
+
+  if (!appointment) {
+    throw new AppError('Meeting room not found', 404);
+  }
+
+  if (role === 'doctor') {
+    const doctorMatches = String(appointment.doctorUserId || appointment.doctorId || '') === String(userId || '');
+
+    if (!doctorMatches) {
+      throw new AppError('You are not assigned as doctor for this appointment', 403);
+    }
+  } else if (role === 'patient') {
+    const patientMatches = String(appointment.patientId || '') === String(userId || '');
+
+    if (!patientMatches) {
+      throw new AppError('You are not assigned as patient for this appointment', 403);
+    }
+  } else {
+    throw new AppError('Role is not allowed for this meeting', 403);
+  }
+
+  return {
+    roomName: normalizedRoomName,
+    appointmentId: String(appointment._id),
+    doctorId: String(appointment.doctorUserId || appointment.doctorId || ''),
+    patientId: String(appointment.patientId || ''),
+    doctorName: appointment.doctorName || 'Doctor',
+    patientName: appointment.patientName || 'Patient'
+  };
 };
 
 module.exports = {
@@ -111,5 +166,6 @@ module.exports = {
   getDoctorsForPatient,
   createAppointmentForPatient,
   getAppointmentsForPatient,
-  createMeetingForAppointment
+  createMeetingForAppointment,
+  getMeetingAccessForUser
 };
