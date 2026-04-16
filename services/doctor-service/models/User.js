@@ -19,6 +19,10 @@ const userSchema = new mongoose.Schema(
             enum: ['patient', 'doctor', 'admin'],
             default: 'patient',
         },
+        isApproved: {
+            type: Boolean,
+            default: true,
+        },
     },
     {
         timestamps: true,

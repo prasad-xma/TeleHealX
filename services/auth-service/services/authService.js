@@ -159,6 +159,32 @@ const getPendingDoctorApplications = async () => {
 	);
 };
 
+const getApprovedDoctors = async ({ name = '', limit = 5 }) => {
+	const query = {
+		role: 'doctor',
+		isApproved: true,
+	};
+
+	if (name) {
+		query.name = { $regex: name, $options: 'i' };
+	}
+
+	const doctors = await User.find(query)
+		.select('name email role isApproved')
+		.sort({ createdAt: -1 })
+		.limit(Math.max(1, Math.min(Number(limit) || 5, 5)))
+		.lean();
+
+	return doctors.map((doctor) => ({
+		_id: doctor._id,
+		id: doctor._id,
+		name: doctor.name,
+		email: doctor.email,
+		role: doctor.role,
+		isApproved: doctor.isApproved,
+	}));
+};
+
 module.exports = {
 	register,
 	login,
@@ -166,4 +192,5 @@ module.exports = {
 	getProfile,
 	approveDoctor,
 	getPendingDoctorApplications,
+	getApprovedDoctors,
 };
