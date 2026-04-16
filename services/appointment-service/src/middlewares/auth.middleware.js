@@ -49,7 +49,26 @@ const authorize = (...allowedRoles) => {
   };
 };
 
+const protectInternalService = (req, res, next) => {
+  const internalSecret = req.headers["x-internal-service-secret"];
+
+  if (!internalSecret) {
+    return next(new AppError("Internal service secret is missing", 401));
+  }
+
+  if (!env.internalServiceSecret) {
+    return next(new AppError("INTERNAL_SERVICE_SECRET is not configured", 500));
+  }
+
+  if (internalSecret !== env.internalServiceSecret) {
+    return next(new AppError("Invalid internal service secret", 403));
+  }
+
+  return next();
+};
+
 module.exports = {
   protect,
-  authorize
+  authorize,
+  protectInternalService
 };

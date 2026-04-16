@@ -372,7 +372,7 @@ const getModuleInfo = async () => {
   return {
     module: "appointment-service",
     version: "v1",
-    status: "booking-flow-ready",
+    status: "payment-sync-ready",
     featuresAvailable: [
       "health check",
       "auth-protected routes",
@@ -388,13 +388,9 @@ const getModuleInfo = async () => {
       "doctor appointments fetch",
       "doctor cancel appointment",
       "doctor complete appointment",
+      "internal payment status update endpoint",
       "doctor meeting room creation",
       "meeting access validation"
-    ],
-    nextPhase: [
-      "payment service integration",
-      "payment status sync",
-      "gateway and frontend integration"
     ]
   };
 };
@@ -824,6 +820,52 @@ const completeDoctorAppointment = async ({ appointmentId, doctorId }) => {
   };
 };
 
+const updateAppointmentPaymentStatusInternal = async ({
+  appointmentId,
+  paymentStatus,
+  appointmentStatus,
+  note,
+  paymentReference
+}) => {
+  const appointment = await Appointment.findById(appointmentId);
+
+  if (!appointment) {
+    throw new AppError("Appointment not found", 404);
+  }
+
+  if (paymentStatus) {
+    appointment.paymentStatus = String(paymentStatus).trim().toUpperCase();
+  }
+
+  if (appointmentStatus) {
+    appointment.status = String(appointmentStatus).trim().toUpperCase();
+  } else {
+    if (appointment.paymentMode === "ONLINE" && appointment.paymentStatus === "PAID") {
+      appointment.status = "CONFIRMED";
+    }
+
+    if (appointment.paymentMode === "ONLINE" && appointment.paymentStatus === "FAILED") {
+      appointment.status = "PENDING_PAYMENT";
+    }
+  }
+
+  const historyNote =
+    note ||
+    `Payment status updated to ${appointment.paymentStatus}${paymentReference ? ` (${paymentReference})` : ""}`;
+
+  appendStatusHistory(
+    appointment,
+    appointment.status,
+    historyNote
+  );
+
+  await appointment.save();
+
+  return {
+    appointment
+  };
+};
+
 const createMeetingForAppointment = async ({ appointmentId, doctorUserId }) => {
   const appointment = await Appointment.findOne({
     _id: appointmentId,
@@ -916,6 +958,7 @@ module.exports = {
   reschedulePatientAppointment,
   cancelDoctorAppointment,
   completeDoctorAppointment,
+  updateAppointmentPaymentStatusInternal,
   createMeetingForAppointment,
   getMeetingAccessForUser
 };

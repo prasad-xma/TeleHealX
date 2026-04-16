@@ -13,10 +13,11 @@ const {
   reschedulePatientAppointment,
   cancelDoctorAppointment,
   completeDoctorAppointment,
+  updateAppointmentPaymentStatusInternal,
   createMeetingForDoctorAppointment,
   getMeetingAccess
 } = require("../controllers/appointment.controller");
-const { protect, authorize } = require("../middlewares/auth.middleware");
+const { protect, authorize, protectInternalService } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
@@ -41,5 +42,11 @@ router.get("/patient/me/:appointmentId", protect, authorize("patient"), getPatie
 router.post("/patient/book", protect, authorize("patient"), createAppointmentForPatient);
 router.patch("/patient/:appointmentId/cancel", protect, authorize("patient"), cancelPatientAppointment);
 router.patch("/patient/:appointmentId/reschedule", protect, authorize("patient"), reschedulePatientAppointment);
+
+router.patch(
+  "/internal/:appointmentId/payment-status",
+  protectInternalService,
+  updateAppointmentPaymentStatusInternal
+);
 
 module.exports = router;

@@ -1,16 +1,27 @@
 const app = require("./app");
 const env = require("./config/env");
-const connectDB = require("./config/db");
+const connectDatabase = require("./config/db");
 
 const startServer = async () => {
   try {
-    await connectDB();
+    await connectDatabase();
 
-    app.listen(env.port, () => {
+    const server = app.listen(env.port, () => {
       console.log(`✅ ${env.serviceName} running on port ${env.port}`);
+      console.log(`✅ Environment: ${env.nodeEnv}`);
     });
-  } catch (err) {
-    console.error("❌ Payment service failed:", err.message);
+
+    process.on("unhandledRejection", (error) => {
+      console.error(" Unhandled Rejection:", error.message);
+      server.close(() => process.exit(1));
+    });
+
+    process.on("uncaughtException", (error) => {
+      console.error(" Uncaught Exception:", error.message);
+      process.exit(1);
+    });
+  } catch (error) {
+    console.error(" Failed to start payment-service:", error.message);
     process.exit(1);
   }
 };
