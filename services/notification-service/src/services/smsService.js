@@ -12,19 +12,64 @@ class SMSService {
       process.env.TWILIO_AUTH_TOKEN
     );
     this.fromNumber = process.env.TWILIO_PHONE_NUMBER || '+12603682484';
+    this.verifiedToNumber = process.env.TWILIO_VERIFIED_TO_NUMBER || '';
+    this.forceVerifiedOnly = process.env.SMS_FORCE_VERIFIED_ONLY === 'true';
+  }
+
+  getSmsDestination(to) {
+    const formattedOriginal = this.formatPhoneNumber(String(to || ''));
+
+    if (this.forceVerifiedOnly && this.verifiedToNumber) {
+      const formattedVerified = this.formatPhoneNumber(this.verifiedToNumber);
+      logger.info(`SMS free-tier mode active. Routing SMS to verified number ${formattedVerified} instead of ${formattedOriginal}`);
+      return formattedVerified;
+    }
+
+    return formattedOriginal;
   }
 
   async sendSMS(to, message) {
+    const destination = this.getSmsDestination(to);
+
     try {
       const messageResponse = await this.client.messages.create({
         body: message,
         from: this.fromNumber,
-        to: this.formatPhoneNumber(to)
+        to: destination
       });
 
-      logger.info(`SMS sent successfully to ${to}. SID: ${messageResponse.sid}`);
+      logger.info(`SMS sent successfully to ${destination}. SID: ${messageResponse.sid}`);
       return { success: true, sid: messageResponse.sid };
     } catch (error) {
+      const twilioCode = Number(error.code || 0);
+      const formattedVerified = this.verifiedToNumber
+        ? this.formatPhoneNumber(this.verifiedToNumber)
+        : '';
+
+      // Twilio trial accounts fail with 21608 for unverified recipient numbers.
+      // Retry once to the verified number when available.
+      if (
+        twilioCode === 21608 &&
+        formattedVerified &&
+        destination !== formattedVerified
+      ) {
+        try {
+          logger.warn(`SMS destination ${destination} is unverified. Retrying with verified number ${formattedVerified}.`);
+
+          const retryResponse = await this.client.messages.create({
+            body: message,
+            from: this.fromNumber,
+            to: formattedVerified
+          });
+
+          logger.info(`SMS retry sent successfully to ${formattedVerified}. SID: ${retryResponse.sid}`);
+          return { success: true, sid: retryResponse.sid };
+        } catch (retryError) {
+          logger.error('SMS retry to verified number failed:', retryError);
+          return { success: false, error: retryError.message };
+        }
+      }
+
       logger.error('Failed to send SMS:', error);
       return { success: false, error: error.message };
     }
