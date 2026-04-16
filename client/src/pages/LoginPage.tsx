@@ -82,12 +82,14 @@ const LoginPage = () => {
       }
       
       setTimeout(() => {
-        if (response.data?.user?.role === 'patient') {
+        // Redirect based on user role
+        if (response.data?.user?.role === 'doctor') {
+          navigate('/doctor/dashboard');
+        } else if (response.data?.user?.role === 'patient') {
           navigate('/landing');
-          return;
+        } else {
+          navigate('/login');
         }
-
-        navigate('/login');
       }, 1000);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
