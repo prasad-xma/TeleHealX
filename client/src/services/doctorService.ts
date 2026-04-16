@@ -78,6 +78,18 @@ export const blockDate = async (date: string) => {
   }
 };
 
+export const unblockDate = async (date: string) => {
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/doctors/me/availability/block`, { 
+      data: { date },
+      headers: authHeader()
+    });
+    return response;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
 export const getDoctorAvailability = async (doctorId: string, date: string) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/doctors/${doctorId}/availability`, {
