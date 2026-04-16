@@ -6,6 +6,9 @@ const {
   getDoctorsForPatient,
   createAppointmentForPatient,
   getMyPatientAppointments,
+  createMeetingForDoctorAppointment,
+  getMeetingAccess,
+  completeConsultation
   getAppointmentById,
   getAppointmentByRoomName,
   updateMeetingRoomForAppointment
@@ -13,6 +16,13 @@ const {
 const { protect, authorize } = require("../middlewares/auth.middleware");
 
 const router = express.Router();
+
+// Add route logging middleware for appointment service
+router.use((req, res, next) => {
+  console.log(`🏥 [APPOINTMENT ROUTES] ${req.method} ${req.url}`);
+  console.log(`🏥 [APPOINTMENT ROUTES] User:`, req.user ? { id: req.user.userId, role: req.user.role } : 'No user');
+  next();
+});
 
 router.get("/", getAppointmentModuleInfo);
 
@@ -22,6 +32,9 @@ router.get("/doctor/me", protect, authorize("doctor"), getMyDoctorAppointments);
 
 router.get('/:appointmentId', protect, authorize('patient', 'doctor', 'admin'), getAppointmentById);
 
+router.patch('/doctor/:appointmentId/complete', protect, authorize('doctor'), completeConsultation);
+
+router.get('/meeting/access', protect, authorize('patient', 'doctor'), getMeetingAccess);
 router.get('/meeting/room/:roomName', protect, authorize('patient', 'doctor'), getAppointmentByRoomName);
 
 router.patch('/:appointmentId/meeting-room', protect, authorize('doctor'), updateMeetingRoomForAppointment);
