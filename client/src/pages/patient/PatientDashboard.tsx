@@ -13,7 +13,8 @@ import {
   LogOut,
   Settings,
   AlertTriangle,
-  CheckCircle
+  CheckCircle,
+  Calendar
 } from 'lucide-react';
 import { 
   getMedicalHistory, 
@@ -21,6 +22,7 @@ import {
   getPrescriptions,
   deleteMedicalReport 
 } from '../../services/patientService';
+import { analyzeSymptoms } from '../../services/aiService';
 
 const PatientDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -30,6 +32,9 @@ const PatientDashboard = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [symptoms, setSymptoms] = useState('');
+  const [aiResponse, setAiResponse] = useState('');
+  const [aiLoading, setAiLoading] = useState(false);
 
   const userRaw = localStorage.getItem('user');
   const user = userRaw ? JSON.parse(userRaw) : null;
@@ -107,6 +112,33 @@ const PatientDashboard = () => {
       month: 'short',
       day: 'numeric'
     });
+  };
+
+  const handleSymptomSubmit = async () => {
+    setError('');
+    setSuccess('');
+
+    if (!symptoms.trim()) {
+      setError('Please write your symptoms before submitting.');
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const response = await analyzeSymptoms({
+        symptoms: symptoms.trim(),
+        patientId: user?._id || user?.id || null,
+      });
+
+      setAiResponse(response.data?.aiResponse || 'No response was returned by AI.');
+      setSuccess('Symptoms analyzed successfully');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Failed to analyze symptoms');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   return (
@@ -418,6 +450,34 @@ const PatientDashboard = () => {
           margin: 0 auto 1rem;
           color: '#94A3B8';
         }
+
+        .symptom-textarea {
+          width: 100%;
+          min-height: 140px;
+          border: 1px solid #CBD5E1;
+          border-radius: 12px;
+          padding: 1rem;
+          font-size: 1rem;
+          font-family: 'Nunito', sans-serif;
+          resize: vertical;
+          outline: none;
+          box-sizing: border-box;
+        }
+
+        .symptom-textarea:focus {
+          border-color: #3B82F6;
+          box-shadow: 0 0 0 3px rgba(59,130,246,0.15);
+        }
+
+        .ai-response-box {
+          margin-top: 1rem;
+          background: #EFF6FF;
+          border: 1px solid #BFDBFE;
+          border-radius: 12px;
+          padding: 1rem;
+          white-space: pre-wrap;
+          color: #0F172A;
+        }
       `}</style>
 
       <div className="dashboard-bg">
@@ -495,6 +555,13 @@ const PatientDashboard = () => {
             >
               <Pill size={18} />
               Prescriptions
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'symptom-checker' ? 'active' : ''}`}
+              onClick={() => setActiveTab('symptom-checker')}
+            >
+              <Stethoscope size={18} />
+              AI Symptom Checker
             </button>
           </div>
 
@@ -731,6 +798,44 @@ const PatientDashboard = () => {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'symptom-checker' && (
+            <div className="content-card">
+              <div className="card-header">
+                <h2 className="card-title">
+                  <Stethoscope size={24} />
+                  AI Symptom Checker
+                </h2>
+              </div>
+
+              <p style={{ marginTop: 0, color: '#475569' }}>
+                Describe your symptoms and submit to get an AI-generated triage response.
+              </p>
+
+              <textarea
+                className="symptom-textarea"
+                value={symptoms}
+                onChange={(e) => setSymptoms(e.target.value)}
+                placeholder="Example: I have fever, sore throat, cough, and body pain for 2 days."
+              />
+
+              <button
+                className="action-btn"
+                onClick={handleSymptomSubmit}
+                disabled={aiLoading}
+                style={{ marginTop: '1rem', opacity: aiLoading ? 0.7 : 1, cursor: aiLoading ? 'not-allowed' : 'pointer' }}
+              >
+                <Stethoscope size={18} />
+                {aiLoading ? 'Analyzing...' : 'Submit Symptoms'}
+              </button>
+
+              {aiResponse && (
+                <div className="ai-response-box">
+                  {aiResponse}
+                </div>
               )}
             </div>
           )}
