@@ -8,7 +8,7 @@ const Joi = require('joi');
 const notificationSchema = Joi.object({
   recipientId: Joi.string().required(),
   recipientType: Joi.string().valid('patient', 'doctor', 'admin').required(),
-  type: Joi.string().valid('appointment_booked', 'appointment_cancelled', 'consultation_completed', 'prescription_issued', 'payment_confirmed').required(),
+  type: Joi.string().valid('appointment_booked', 'appointment_accepted', 'appointment_cancelled', 'consultation_completed', 'prescription_issued', 'payment_confirmed').required(),
   channels: Joi.object({
     email: Joi.boolean().default(true),
     sms: Joi.boolean().default(true)
@@ -45,6 +45,9 @@ class NotificationController {
       switch (value.type) {
         case 'appointment_booked':
           template = NotificationTemplates.getAppointmentBookedTemplate(value.data);
+          break;
+        case 'appointment_accepted':
+          template = NotificationTemplates.getAppointmentAcceptedTemplate(value.data);
           break;
         case 'appointment_cancelled':
           template = NotificationTemplates.getAppointmentCancelledTemplate(value.data);
@@ -393,6 +396,46 @@ class NotificationController {
 
     } catch (error) {
       logger.error('Error sending consultation completion notifications:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
+
+  async sendAppointmentAcceptedNotifications(req, res) {
+    try {
+      const { appointmentData, patientData, doctorData } = req.body;
+
+      if (!appointmentData || !patientData || !doctorData) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required data: appointmentData, patientData, or doctorData'
+        });
+      }
+
+      const notificationService = require('../services/notificationService');
+      const result = await notificationService.sendAppointmentAcceptedNotifications(
+        appointmentData,
+        patientData,
+        doctorData
+      );
+
+      if (result.success) {
+        res.status(200).json({
+          success: true,
+          message: 'Appointment acceptance notifications sent successfully',
+          data: result
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to send appointment acceptance notifications',
+          error: result.error
+        });
+      }
+    } catch (error) {
+      logger.error('Error sending appointment acceptance notifications:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'
