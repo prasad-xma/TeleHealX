@@ -8,7 +8,7 @@ const getMedicalHistory = async (patientId) => {
             .populate('doctorId', 'name email specialization')
             .sort({ visitDate: -1 });
         
-        return { message: 'Medical history retrieved successfully', data: records };
+        return records;
     } catch (error) {
         throw new Error('Failed to fetch medical history');
     }
@@ -16,10 +16,13 @@ const getMedicalHistory = async (patientId) => {
 
 const uploadMedicalReport = async (reportData) => {
     try {
+        console.log('Attempting to create medical report with data:', reportData);
         const report = await MedicalReport.create(reportData);
         return report;
     } catch (error) {
-        throw new Error('Failed to upload medical report');
+        console.error('Error creating medical report:', error.message);
+        console.error('Validation errors:', error.errors);
+        throw new Error(`Failed to upload medical report: ${error.message}`);
     }
 };
 
@@ -37,18 +40,35 @@ const getMedicalReports = async (patientId) => {
 
 const deleteMedicalReport = async (reportId, patientId) => {
     try {
-        const report = await MedicalReport.findOneAndDelete({ 
-            _id: reportId, 
-            patientId: patientId 
+        const report = await MedicalReport.findOneAndDelete({
+            _id: reportId,
+            patientId: patientId
         });
-        
+
         if (!report) {
             throw new Error('Report not found or access denied');
         }
-        
+
         return report;
     } catch (error) {
         throw new Error('Failed to delete medical report');
+    }
+};
+
+const downloadMedicalReport = async (reportId, patientId) => {
+    try {
+        const report = await MedicalReport.findOne({
+            _id: reportId,
+            patientId: patientId
+        });
+
+        if (!report) {
+            throw new Error('Report not found or access denied');
+        }
+
+        return report;
+    } catch (error) {
+        throw new Error('Failed to fetch medical report');
     }
 };
 
@@ -132,15 +152,33 @@ const getProfile = async (patientId) => {
 const updateProfile = async (patientId, profileData) => {
     try {
         const User = require('../models/User');
+        console.log('Updating profile for patient:', patientId);
+        console.log('Profile data received:', profileData);
+        
+        // Check if user exists first
+        const existingUser = await User.findById(patientId);
+        if (!existingUser) {
+            throw new Error('User not found');
+        }
+        
+        // Remove sensitive fields that shouldn't be updated
+        const { password, role, _id, ...safeProfileData } = profileData;
+        
         const updatedUser = await User.findByIdAndUpdate(
             patientId,
-            { $set: profileData },
-            { new: true }
-        );
+            safeProfileData,
+            { new: true, runValidators: true }
+        ).select('-password');
         
+        if (!updatedUser) {
+            throw new Error('Failed to update user');
+        }
+        
+        console.log('Profile updated successfully:', updatedUser);
         return { message: 'Profile updated successfully', data: updatedUser };
     } catch (error) {
-        throw new Error('Failed to update profile');
+        console.error('Error in updateProfile:', error);
+        throw new Error(`Failed to update profile: ${error.message}`);
     }
 };
 
@@ -204,6 +242,7 @@ module.exports = {
     uploadMedicalReport,
     getMedicalReports,
     deleteMedicalReport,
+    downloadMedicalReport,
     addPrescription,
     getPrescriptions,
     getPrescriptionById,
