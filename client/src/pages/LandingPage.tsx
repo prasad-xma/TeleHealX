@@ -47,7 +47,7 @@ const LandingPage = () => {
       } else if (userRole === 'patient') {
         navigate('/dashboard');
       } else if (userRole === 'doctor') {
-        navigate('/dashboard');
+        navigate('/doctor/dashboard');
       }
     } else {
       // User not logged in, redirect to register

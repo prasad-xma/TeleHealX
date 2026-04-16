@@ -107,7 +107,7 @@ const LoginPage = () => {
         if (userRole === 'doctor') {
           // Check if doctor is approved
           if (response.data.user?.isApproved) {
-            navigate('/dashboard');
+            navigate('/doctor/dashboard');
           } else {
             navigate('/doctor-login-blocked');
           }
