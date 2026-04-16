@@ -739,7 +739,7 @@ const AdminDashboard = () => {
                     
                     <select
                       value={filterRole}
-                      onChange={(e) => setFilterRole(e.target.value)}
+                      onChange={(e) => setFilterRole(e.target.value as 'all' | 'patient' | 'doctor' | 'admin')}
                       className="filter-select"
                     >
                       <option value="all">All Roles</option>
