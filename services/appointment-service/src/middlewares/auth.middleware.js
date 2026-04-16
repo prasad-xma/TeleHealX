@@ -12,6 +12,14 @@ const extractTokenFromHeader = (req) => {
   return authHeader.split(" ")[1];
 };
 
+const normalizeRole = (role) => {
+  if (!role) {
+    return null;
+  }
+
+  return String(role).trim().toUpperCase();
+};
+
 const protect = (req, res, next) => {
   try {
     const token = extractTokenFromHeader(req);
@@ -23,11 +31,21 @@ const protect = (req, res, next) => {
     const decoded = jwt.verify(token, env.jwtSecret);
 
     req.user = {
-      userId: decoded.userId || decoded.id || decoded.sub,
+      userId:
+        decoded.userId ||
+        decoded.id ||
+        decoded._id ||
+        decoded.sub ||
+        null,
       email: decoded.email || null,
-      role: decoded.role || null,
-      raw: decoded
+      role: normalizeRole(decoded.role),
+      raw: decoded,
+      token
     };
+
+    if (!req.user.userId) {
+      return next(new AppError("Invalid token payload: user id not found", 401));
+    }
 
     return next();
   } catch (error) {
@@ -41,8 +59,21 @@ const authorize = (...allowedRoles) => {
       return next(new AppError("Unauthorized access", 401));
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
-      return next(new AppError("Forbidden: insufficient permissions", 403));
+    const normalizedAllowedRoles = allowedRoles.map((role) =>
+      String(role).trim().toUpperCase()
+    );
+
+    const userRole = normalizeRole(req.user.role);
+
+    if (!userRole || !normalizedAllowedRoles.includes(userRole)) {
+      return next(
+        new AppError(
+          `Forbidden: insufficient permissions. Required roles: ${normalizedAllowedRoles.join(
+            ", "
+          )}. Your role: ${userRole || "UNKNOWN"}`,
+          403
+        )
+      );
     }
 
     return next();

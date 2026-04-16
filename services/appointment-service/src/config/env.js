@@ -13,15 +13,18 @@ const env = {
   clientUrl: process.env.CLIENT_URL || "http://localhost:5173",
   defaultTimezone: process.env.DEFAULT_TIMEZONE || "Asia/Colombo",
   nodeEnv: process.env.NODE_ENV || "development",
-  serviceName: process.env.SERVICE_NAME || "appointment-service"
+  serviceName: process.env.SERVICE_NAME || "appointment-service",
+  useMockDoctorService: process.env.USE_MOCK_DOCTOR_SERVICE || "true",
+  useMockPatientService: process.env.USE_MOCK_PATIENT_SERVICE || "true",
+  maxRescheduleCount: Number(process.env.MAX_RESCHEDULE_COUNT || 2)
 };
 
 if (!env.mongoUri) {
-  console.warn("⚠️ MONGODB_URI is not configured for appointment-service");
+  console.warn(" MONGODB_URI is not configured for appointment-service");
 }
 
 if (!env.jwtSecret) {
-  console.warn("⚠️ JWT_SECRET is not configured for appointment-service");
+  console.warn(" JWT_SECRET is not configured for appointment-service");
 }
 
 module.exports = env;
