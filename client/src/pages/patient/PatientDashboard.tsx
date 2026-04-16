@@ -26,9 +26,9 @@ import { analyzeSymptoms } from '../../services/aiService';
 
 const PatientDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [medicalHistory, setMedicalHistory] = useState([]);
-  const [medicalReports, setMedicalReports] = useState([]);
-  const [prescriptions, setPrescriptions] = useState([]);
+  const [medicalHistory, setMedicalHistory] = useState<any[]>([]);
+  const [medicalReports, setMedicalReports] = useState<any[]>([]);
+  const [prescriptions, setPrescriptions] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -478,6 +478,7 @@ const PatientDashboard = () => {
           white-space: pre-wrap;
           color: #0F172A;
         }
+
       `}</style>
 
       <div className="dashboard-bg">
@@ -567,6 +568,11 @@ const PatientDashboard = () => {
 
           {activeTab === 'overview' && (
             <div>
+              <Link to="/appointments" className="action-btn" style={{ marginBottom: '1rem', width: 'fit-content' }}>
+                <Calendar size={18} />
+                Create Appointment
+              </Link>
+
               <div className="overview-grid">
                 <div className="overview-card">
                   <div className="overview-icon">
@@ -684,7 +690,7 @@ const PatientDashboard = () => {
                 </Link>
                 <Link to="/appointments" className="action-btn">
                   <Calendar size={18} />
-                  Book Appointments
+                  Create Appointment
                 </Link>
                 <Link to="/medical-reports" className="action-btn">
                   <FileText size={18} />
