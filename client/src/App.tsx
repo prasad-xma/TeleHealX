@@ -5,6 +5,7 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import LandingPage from './pages/LandingPage';
 import UserDashboardPage from './pages/UserDashboardPage';
+import SymptomCheckerPage from './pages/SymptomCheckerPage';
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/landing" element={<LandingPage />} />
         <Route path="/user-dashboard" element={<UserDashboardPage />} />
+        <Route path="/symptom-checker" element={<SymptomCheckerPage />} />
       </Routes>
     </Router>
   );
