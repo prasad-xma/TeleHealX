@@ -16,15 +16,20 @@ const env = {
   serviceName: process.env.SERVICE_NAME || "appointment-service",
   useMockDoctorService: process.env.USE_MOCK_DOCTOR_SERVICE || "true",
   useMockPatientService: process.env.USE_MOCK_PATIENT_SERVICE || "true",
-  maxRescheduleCount: Number(process.env.MAX_RESCHEDULE_COUNT || 2)
+  maxRescheduleCount: Number(process.env.MAX_RESCHEDULE_COUNT || 2),
+  internalServiceSecret: process.env.INTERNAL_SERVICE_SECRET || ""
 };
 
 if (!env.mongoUri) {
-  console.warn(" MONGODB_URI is not configured for appointment-service");
+  console.warn("⚠️ MONGODB_URI is not configured for appointment-service");
 }
 
 if (!env.jwtSecret) {
-  console.warn(" JWT_SECRET is not configured for appointment-service");
+  console.warn("⚠️ JWT_SECRET is not configured for appointment-service");
+}
+
+if (!env.internalServiceSecret) {
+  console.warn("⚠️ INTERNAL_SERVICE_SECRET is not configured for appointment-service");
 }
 
 module.exports = env;

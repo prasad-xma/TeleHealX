@@ -10,17 +10,17 @@ const createCheckoutSession = async ({ amount, currency, metadata }) => {
     line_items: [
       {
         price_data: {
-          currency: currency,
+          currency,
           product_data: {
             name: "Doctor Appointment Payment"
           },
-          unit_amount: amount * 100
+          unit_amount: Math.round(Number(amount) * 100)
         },
         quantity: 1
       }
     ],
     metadata,
-    success_url: `${env.clientUrl}/payments/success`,
+    success_url: `${env.clientUrl}/payments/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${env.clientUrl}/payments/fail`
   });
 

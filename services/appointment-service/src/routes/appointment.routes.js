@@ -14,7 +14,11 @@ const {
   updateAppointmentStatus,
   updateAppointmentPaymentStatus
 } = require("../controllers/appointment.controller");
-const { protect, authorize } = require("../middlewares/auth.middleware");
+const {
+  protect,
+  authorize,
+  allowInternalServiceOrUser
+} = require("../middlewares/auth.middleware");
 
 const router = express.Router();
 
@@ -33,6 +37,16 @@ router.get("/:id", protect, authorize("PATIENT", "DOCTOR", "ADMIN"), getAppointm
 router.patch("/:id/cancel", protect, authorize("PATIENT", "DOCTOR", "ADMIN"), cancelAppointment);
 router.patch("/:id/reschedule", protect, authorize("PATIENT", "ADMIN"), rescheduleAppointment);
 router.patch("/:id/status", protect, authorize("DOCTOR", "ADMIN"), updateAppointmentStatus);
-router.patch("/:id/payment-status", protect, authorize("ADMIN", "DOCTOR", "PATIENT"), updateAppointmentPaymentStatus);
+
+/**
+ * This route can be called by:
+ * 1. Authenticated users with allowed roles
+ * 2. Internal Payment Service using x-internal-service-secret
+ */
+router.patch(
+  "/:id/payment-status",
+  allowInternalServiceOrUser("ADMIN", "DOCTOR", "PATIENT"),
+  updateAppointmentPaymentStatus
+);
 
 module.exports = router;

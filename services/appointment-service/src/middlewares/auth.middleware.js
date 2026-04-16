@@ -31,12 +31,7 @@ const protect = (req, res, next) => {
     const decoded = jwt.verify(token, env.jwtSecret);
 
     req.user = {
-      userId:
-        decoded.userId ||
-        decoded.id ||
-        decoded._id ||
-        decoded.sub ||
-        null,
+      userId: decoded.userId || decoded.id || decoded._id || decoded.sub || null,
       email: decoded.email || null,
       role: normalizeRole(decoded.role),
       raw: decoded,
@@ -80,7 +75,38 @@ const authorize = (...allowedRoles) => {
   };
 };
 
+const allowInternalServiceOrUser = (...allowedRoles) => {
+  return (req, res, next) => {
+    const internalSecret = req.headers["x-internal-service-secret"];
+
+    if (
+      internalSecret &&
+      env.internalServiceSecret &&
+      internalSecret === env.internalServiceSecret
+    ) {
+      req.user = {
+        userId: "internal-payment-service",
+        email: null,
+        role: "ADMIN",
+        raw: { internalService: true }
+      };
+
+      req.isInternalServiceRequest = true;
+      return next();
+    }
+
+    return protect(req, res, (error) => {
+      if (error) {
+        return next(error);
+      }
+
+      return authorize(...allowedRoles)(req, res, next);
+    });
+  };
+};
+
 module.exports = {
   protect,
-  authorize
+  authorize,
+  allowInternalServiceOrUser
 };
