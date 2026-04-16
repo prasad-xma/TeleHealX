@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Loader2, RefreshCw, Video, User, FileText, AlertTriangle } from 'lucide-react';
 import { createMeetingForDoctorAppointment, getMyDoctorAppointments } from '../../services/appointmentService';
-import { createTelemedicineToken } from '../../services/telemedicineService';
 
 type Appointment = {
   _id: string;
@@ -16,6 +16,7 @@ type Appointment = {
 };
 
 const DoctorAppointmentsPage = () => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [creatingMeetingId, setCreatingMeetingId] = useState('');
@@ -66,7 +67,7 @@ const DoctorAppointmentsPage = () => {
   };
 
   const openMeetingRoom = (roomName: string) => {
-    window.open(`https://meet.jit.si/${roomName}`, '_blank');
+    navigate(`/video-call/${encodeURIComponent(roomName)}`);
   };
 
   const handleCreateMeeting = async (appointment: Appointment) => {
@@ -81,8 +82,6 @@ const DoctorAppointmentsPage = () => {
         throw new Error('Meeting room was not created');
       }
 
-      // Validate access through telemedicine-service before opening shared room.
-      await createTelemedicineToken(roomName);
       openMeetingRoom(roomName);
       await fetchAppointments();
     } catch (err: any) {
@@ -94,7 +93,6 @@ const DoctorAppointmentsPage = () => {
 
   const handleJoinMeeting = async (roomName: string) => {
     try {
-      await createTelemedicineToken(roomName);
       openMeetingRoom(roomName);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Unable to join meeting');
