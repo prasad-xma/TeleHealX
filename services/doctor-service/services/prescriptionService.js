@@ -2,12 +2,15 @@ const Prescription = require('../models/Prescription');
 
 const createPrescription = async (prescriptionData) => {
 	try {
+		console.log('Creating prescription with data:', prescriptionData);
 		const prescription = await Prescription.create(prescriptionData);
+		console.log('Prescription created successfully:', prescription._id);
 		return await Prescription.findById(prescription._id)
 			.populate('doctorId', 'name email')
 			.populate('patientId', 'name email')
 			.select('-__v');
 	} catch (error) {
+		console.error('Error creating prescription:', error.message);
 		throw new Error('Failed to create prescription');
 	}
 };

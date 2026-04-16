@@ -2,6 +2,7 @@ const bcrypt = require('bcryptjs');
 const mongoose = require('mongoose');
 const User = require('../models/User');
 const DoctorApplication = require('../models/DoctorApplication');
+const DoctorProfile = require('../models/DoctorProfile');
 const { generateToken } = require('../utils/jwtUtils');
 
 const register = async (payload) => {
@@ -70,6 +71,18 @@ const register = async (payload) => {
 			hospital: doctorInfo.hospital.trim(),
 			yearsOfExperience: doctorInfo.yearsOfExperience,
 			status: 'pending',
+		});
+
+		await DoctorProfile.create({
+			userId: user._id,
+			specialization: doctorInfo.specialization,
+			licenseNumber: doctorInfo.licenseNumber,
+			hospital: doctorInfo.hospital,
+			yearsOfExperience: doctorInfo.yearsOfExperience,
+			consultationFee: doctorInfo.consultationFee || 0,
+			bio: doctorInfo.bio || '',
+			languages: doctorInfo.languages || [],
+			isVerified: false,
 		});
 	}
 
@@ -164,8 +177,15 @@ const approveDoctor = async (userId) => {
 	user.isApproved = true;
 	await user.save();
 
-	doctorApplication.status = 'approved';
-	await doctorApplication.save();
+	await DoctorProfile.findOneAndUpdate(
+		{ userId: user._id },
+		{ isVerified: true }
+	);
+
+	await DoctorApplication.findOneAndUpdate(
+		{ user: user._id },
+		{ status: 'approved' }
+	);
 
 	return {
 		message: 'Doctor approved successfully',
