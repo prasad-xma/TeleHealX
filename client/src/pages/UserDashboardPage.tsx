@@ -1,6 +1,8 @@
+import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 
 const UserDashboardPage = () => {
+  const navigate = useNavigate();
   const userRaw = localStorage.getItem('user');
   const user = userRaw ? JSON.parse(userRaw) : null;
   const name = user?.name || 'Patient';
@@ -36,6 +38,22 @@ const UserDashboardPage = () => {
         <p style={{ color: '#334155', marginTop: 0, marginBottom: '1.5rem' }}>
           This is your dashboard page.
         </p>
+
+        <button
+          onClick={() => navigate('/symptom-checker')}
+          style={{
+            background: '#2563eb',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '10px',
+            padding: '0.85rem 1.2rem',
+            fontWeight: 700,
+            cursor: 'pointer',
+            marginBottom: '1.5rem'
+          }}
+        >
+          Check Symptoms with AI
+        </button>
 
         <div
           style={{
