@@ -7,6 +7,11 @@ const appointmentSchema = new mongoose.Schema(
       required: true,
       index: true
     },
+    doctorUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      index: true
+    },
     patientId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true,
