@@ -43,6 +43,18 @@ const getDoctorDetailsForPatient = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Doctor details fetched successfully");
 });
 
+const getDoctorSlotsForPatient = asyncHandler(async (req, res) => {
+  const { doctorId } = req.params;
+  const date = typeof req.query.date === "string" ? req.query.date.trim() : "";
+
+  const result = await appointmentService.getDoctorSlotsForPatient({
+    doctorId,
+    date
+  });
+
+  return sendSuccess(res, result, "Doctor slots fetched successfully");
+});
+
 const createAppointmentForPatient = asyncHandler(async (req, res) => {
   const {
     doctorId,
@@ -52,7 +64,9 @@ const createAppointmentForPatient = asyncHandler(async (req, res) => {
     type,
     notes,
     isVideoConsultation,
-    patientName
+    patientName,
+    paymentMode,
+    consultationFee
   } = req.body;
 
   if (!doctorId || !date || !time) {
@@ -71,7 +85,9 @@ const createAppointmentForPatient = asyncHandler(async (req, res) => {
     time,
     type,
     notes,
-    isVideoConsultation
+    isVideoConsultation,
+    paymentMode,
+    consultationFee
   });
 
   return sendSuccess(res, result, "Appointment created successfully", 201);
@@ -81,6 +97,44 @@ const getMyPatientAppointments = asyncHandler(async (req, res) => {
   const result = await appointmentService.getAppointmentsForPatient(req.user.userId);
 
   return sendSuccess(res, result, "Patient appointments fetched successfully");
+});
+
+const getPatientAppointmentById = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+
+  const result = await appointmentService.getPatientAppointmentById({
+    appointmentId,
+    patientId: req.user.userId
+  });
+
+  return sendSuccess(res, result, "Patient appointment fetched successfully");
+});
+
+const cancelPatientAppointment = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const reason = typeof req.body.reason === "string" ? req.body.reason.trim() : "";
+
+  const result = await appointmentService.cancelPatientAppointment({
+    appointmentId,
+    patientId: req.user.userId,
+    reason
+  });
+
+  return sendSuccess(res, result, "Appointment cancelled successfully");
+});
+
+const reschedulePatientAppointment = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const { date, time } = req.body;
+
+  const result = await appointmentService.reschedulePatientAppointment({
+    appointmentId,
+    patientId: req.user.userId,
+    date,
+    time
+  });
+
+  return sendSuccess(res, result, "Appointment rescheduled successfully");
 });
 
 const getMeetingAccess = asyncHandler(async (req, res) => {
@@ -119,8 +173,12 @@ module.exports = {
   getMyDoctorAppointments,
   getDoctorsForPatient,
   getDoctorDetailsForPatient,
+  getDoctorSlotsForPatient,
   createAppointmentForPatient,
   getMyPatientAppointments,
+  getPatientAppointmentById,
+  cancelPatientAppointment,
+  reschedulePatientAppointment,
   createMeetingForDoctorAppointment,
   getMeetingAccess
 };
