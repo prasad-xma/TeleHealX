@@ -11,6 +11,7 @@ app.use(cors());
 
 const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:5001';
 const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5002';
+const patientServiceUrl = process.env.PATIENT_SERVICE_URL || 'http://localhost:5015';
 const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:5004';
 const telemedicineServiceUrl = process.env.TELEMEDICINE_SERVICE_URL || 'http://localhost:5005';
 
@@ -29,6 +30,11 @@ app.use(
 app.use(
   '/api/users',
   createServiceProxy(userServiceUrl, '/api/users')
+);
+
+app.use(
+  '/api/patients',
+  createServiceProxy(patientServiceUrl, '/api/patients')
 );
 
 app.use(
