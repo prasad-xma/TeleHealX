@@ -1,7 +1,8 @@
 const express = require("express");
 const {
   getAppointmentModuleInfo,
-  getMyAppointmentAccessInfo
+  getMyAppointmentAccessInfo,
+  getMyDoctorAppointments
 } = require("../controllers/appointment.controller");
 const { protect, authorize } = require("../middlewares/auth.middleware");
 
@@ -9,6 +10,8 @@ const router = express.Router();
 
 router.get("/", getAppointmentModuleInfo);
 
-router.get("/me", protect, authorize("PATIENT", "DOCTOR", "ADMIN"), getMyAppointmentAccessInfo);
+router.get("/me", protect, authorize("patient", "doctor", "admin"), getMyAppointmentAccessInfo);
+
+router.get("/doctor/me", protect, authorize("doctor"), getMyDoctorAppointments);
 
 module.exports = router;

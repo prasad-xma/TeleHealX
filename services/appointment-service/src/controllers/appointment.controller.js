@@ -14,7 +14,14 @@ const getMyAppointmentAccessInfo = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Protected appointment route is working");
 });
 
+const getMyDoctorAppointments = asyncHandler(async (req, res) => {
+  const result = await appointmentService.getAppointmentsForDoctor(req.user.userId);
+
+  return sendSuccess(res, result, 'Doctor appointments fetched successfully');
+});
+
 module.exports = {
   getAppointmentModuleInfo,
-  getMyAppointmentAccessInfo
+  getMyAppointmentAccessInfo,
+  getMyDoctorAppointments
 };

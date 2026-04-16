@@ -1,3 +1,5 @@
+const Appointment = require('../models/Appointment');
+
 const getModuleInfo = async () => {
   return {
     module: "appointment-service",
@@ -22,7 +24,19 @@ const getMyAppointmentAccessInfo = async (user) => {
   };
 };
 
+const getAppointmentsForDoctor = async (doctorId) => {
+  const appointments = await Appointment.find({ doctorId })
+    .sort({ date: 1, time: 1 })
+    .lean();
+
+  return {
+    appointments,
+    totalAppointments: appointments.length
+  };
+};
+
 module.exports = {
   getModuleInfo,
-  getMyAppointmentAccessInfo
+  getMyAppointmentAccessInfo,
+  getAppointmentsForDoctor
 };
