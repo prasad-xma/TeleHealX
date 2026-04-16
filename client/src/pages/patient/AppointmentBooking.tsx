@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, type ReactElement } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
   Clock, 
@@ -37,9 +37,11 @@ interface Appointment {
   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
   notes?: string;
   isVideoConsultation: boolean;
+  meetingRoomName?: string;
 }
 
 const AppointmentBooking = () => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -158,13 +160,22 @@ const AppointmentBooking = () => {
   };
 
   const getTypeIcon = (type: string) => {
-    const icons: { [key: string]: JSX.Element } = {
+    const icons: { [key: string]: ReactElement } = {
       consultation: <Video size={16} />,
       checkup: <Calendar size={16} />,
       followup: <Clock size={16} />,
       emergency: <AlertTriangle size={16} />
     };
     return icons[type] || <Calendar size={16} />;
+  };
+
+  const handleJoinMeeting = async (roomName: string) => {
+    try {
+      navigate(`/video-call/${encodeURIComponent(roomName)}`);
+    } catch (error: any) {
+      setError(error.response?.data?.message || 'Unable to join meeting');
+      setTimeout(() => setError(''), 3000);
+    }
   };
 
   const availableTimes = [
@@ -581,6 +592,18 @@ const AppointmentBooking = () => {
           animation: spin 1s linear infinite;
         }
 
+        .join-btn {
+          margin-top: 0.9rem;
+          border: none;
+          border-radius: 10px;
+          padding: 0.5rem 0.85rem;
+          color: white;
+          background: #16a34a;
+          font-size: 0.82rem;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
         @keyframes spin {
           from { transform: rotate(0deg); }
           to { transform: rotate(360deg); }
@@ -737,6 +760,15 @@ const AppointmentBooking = () => {
                         {appointment.notes && (
                           <div><strong>Notes:</strong> {appointment.notes}</div>
                         )}
+
+                        {appointment.meetingRoomName ? (
+                          <button
+                            className="join-btn"
+                            onClick={() => handleJoinMeeting(appointment.meetingRoomName || '')}
+                          >
+                            Join Meeting
+                          </button>
+                        ) : null}
                       </div>
                     </div>
                   ))}

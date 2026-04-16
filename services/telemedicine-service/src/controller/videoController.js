@@ -1,4 +1,4 @@
-const { generateToken } = require('../services/videoService');
+const { ensureMeetingAccess, generateToken } = require('../services/videoService');
 
 const getHealth = (req, res) => {
   return res.status(200).json({
@@ -7,7 +7,7 @@ const getHealth = (req, res) => {
   });
 };
 
-const createToken = (req, res) => {
+const createToken = async (req, res) => {
   try {
     const { roomName } = req.body;
 
@@ -23,6 +23,11 @@ const createToken = (req, res) => {
     if (!allowedRoles.includes(req.user.role)) {
       return res.status(403).json({ message: 'Only patients and doctors can join consultations' });
     }
+
+    await ensureMeetingAccess({
+      roomName,
+      authorizationHeader: req.headers.authorization,
+    });
 
     const session = generateToken({
       user: {
@@ -40,7 +45,11 @@ const createToken = (req, res) => {
       expiresIn: 3600,
     });
   } catch (error) {
-    return res.status(500).json({ message: error.message || 'Token generation failed' });
+    const message = error?.message || 'Token generation failed';
+    const lower = String(message).toLowerCase();
+    const statusCode = lower.includes('denied') || lower.includes('not assigned') || lower.includes('not found') ? 403 : 500;
+
+    return res.status(statusCode).json({ message });
   }
 };
 

@@ -5,7 +5,9 @@ const {
   getMyDoctorAppointments,
   getDoctorsForPatient,
   createAppointmentForPatient,
-  getMyPatientAppointments
+  getMyPatientAppointments,
+  createMeetingForDoctorAppointment,
+  getMeetingAccess
 } = require("../controllers/appointment.controller");
 const { protect, authorize } = require("../middlewares/auth.middleware");
 
@@ -16,6 +18,10 @@ router.get("/", getAppointmentModuleInfo);
 router.get("/me", protect, authorize("patient", "doctor", "admin"), getMyAppointmentAccessInfo);
 
 router.get("/doctor/me", protect, authorize("doctor"), getMyDoctorAppointments);
+
+router.patch('/doctor/:appointmentId/meeting', protect, authorize('doctor'), createMeetingForDoctorAppointment);
+
+router.get('/meeting/access', protect, authorize('patient', 'doctor'), getMeetingAccess);
 
 router.get('/patient/doctors', protect, authorize('patient'), getDoctorsForPatient);
 

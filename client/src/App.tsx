@@ -27,6 +27,7 @@ const MedicalHistoryManagement = lazy(() => import('./pages/patient/MedicalHisto
 const MedicalReportsManagement = lazy(() => import('./pages/patient/MedicalReportsManagement'));
 const PrescriptionManagement = lazy(() => import('./pages/patient/PrescriptionManagement'));
 const AppointmentBooking = lazy(() => import('./pages/patient/AppointmentBooking'));
+const VideoCallPage = lazy(() => import('./pages/VideoCallPage'));
 const DoctorDashboard = lazy(() => import('./pages/doctor/DoctorDashboard'));
 const DoctorOverviewPage = lazy(() => import('./pages/doctor/DoctorOverviewPage'));
 const DoctorProfilePage = lazy(() => import('./pages/doctor/DoctorProfilePage'));
@@ -122,6 +123,11 @@ function App() {
           <Route path="/appointments" element={
             <ProtectedRoute>
               <AppointmentBooking />
+            </ProtectedRoute>
+          } />
+          <Route path="/video-call/:roomName" element={
+            <ProtectedRoute>
+              <VideoCallPage />
             </ProtectedRoute>
           } />
 
