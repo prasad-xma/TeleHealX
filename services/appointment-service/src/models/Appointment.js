@@ -28,6 +28,9 @@ const appointmentSchema = new mongoose.Schema(
       unique: true,
       sparse: true,
       index: true
+      required: true
+      index: true,
+      trim: true
     },
     doctorId: {
       type: mongoose.Schema.Types.ObjectId,
