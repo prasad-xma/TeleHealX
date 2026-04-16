@@ -9,14 +9,19 @@ const register = async (payload) => {
 		birthDay,
 		gender,
 		address,
+		phone,
 		email,
 		password,
 		role = 'patient',
 		doctorInfo,
 	} = payload;
 
-	if (!name || !birthDay || !gender || !address || !email || !password) {
+	if (!name || !birthDay || !gender || !address || !phone || !email || !password) {
 		throw new Error('Please fill all required fields');
+	}
+
+	if (!/^\+?[0-9]{7,15}$/.test(String(phone).trim())) {
+		throw new Error('Phone number is invalid');
 	}
 
 	if (role !== 'patient' && role !== 'doctor' && role !== 'admin') {
@@ -47,6 +52,7 @@ const register = async (payload) => {
 		birthDay,
 		gender,
 		address,
+		phone,
 		email,
 		password: hashedPassword,
 		role,
@@ -72,6 +78,7 @@ const register = async (payload) => {
 		user: {
 			id: user._id,
 			name: user.name,
+			phone: user.phone,
 			email: user.email,
 			role: user.role,
 			isApproved: user.isApproved,
@@ -108,6 +115,7 @@ const login = async (payload) => {
 		user: {
 			id: user._id,
 			name: user.name,
+			phone: user.phone,
 			email: user.email,
 			role: user.role,
 			isApproved: user.isApproved,
