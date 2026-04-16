@@ -20,3 +20,17 @@ export const createTelemedicineToken = async (roomName: string) => {
     throw error;
   }
 };
+
+export const createTelemedicineMeeting = async (appointmentId: string) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE_URL}/meeting`,
+      { appointmentId },
+      { headers: authHeader() }
+    );
+
+    return response.data.data;
+  } catch (error: any) {
+    throw error;
+  }
+};
