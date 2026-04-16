@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getMyDoctorProfile, createOrUpdateMyProfile } from '../../services/doctorService';
-import { User, Mail, Stethoscope, Building, DollarSign, Clock, Globe, Image as ImageIcon, Star, Save, Loader2, X, Plus } from 'lucide-react';
+import { User, Mail, Stethoscope, Building, DollarSign, Clock, Globe, Star, Save, Loader2, X, Plus } from 'lucide-react';
 
 const DoctorProfilePage = () => {
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ const DoctorProfilePage = () => {
     hospitalClinic: '',
     yearsOfExperience: '',
     consultationFee: '',
-    profileImageUrl: '',
+    specialization: '',
   });
 
   const [languages, setLanguages] = useState<string[]>([]);
@@ -36,12 +36,12 @@ const DoctorProfilePage = () => {
       setProfile(data);
       setFormData({
         bio: data.bio || '',
-        hospitalClinic: data.hospitalClinic || '',
+        hospitalClinic: data.hospital || '',
         yearsOfExperience: data.yearsOfExperience || '',
         consultationFee: data.consultationFee || '',
-        profileImageUrl: data.profileImageUrl || '',
+        specialization: data.specialization || '',
       });
-      setLanguages(data.languagesSpoken || []);
+      setLanguages(data.languages || []);
     } catch (error: any) {
       if (error.response?.status === 404) {
         setProfile(null);
@@ -81,10 +81,12 @@ const DoctorProfilePage = () => {
 
     try {
       const payload = {
-        ...formData,
+        bio: formData.bio,
+        hospital: formData.hospitalClinic,
         yearsOfExperience: Number(formData.yearsOfExperience),
         consultationFee: Number(formData.consultationFee),
-        languagesSpoken: languages,
+        specialization: formData.specialization,
+        languages: languages,
       };
       await createOrUpdateMyProfile(payload);
       setShowSuccess(true);
@@ -197,8 +199,10 @@ const DoctorProfilePage = () => {
                 </div>
                 <input
                   type="text"
-                  value={user?.specialization || profile?.specialization || ''}
+                  name="specialization"
+                  value={user?.specialization || profile?.specialization || formData.specialization}
                   readOnly={!!user?.specialization}
+                  onChange={!user?.specialization ? handleInputChange : undefined}
                   className={`w-full py-3 pl-10 pr-4 border-2 rounded-xl text-sm ${
                     user?.specialization
                       ? 'border-gray-200 bg-gray-50 text-gray-600 cursor-not-allowed'
@@ -318,37 +322,6 @@ const DoctorProfilePage = () => {
                       </button>
                     </div>
                   ))}
-                </div>
-              )}
-            </div>
-
-            {/* Profile Image URL */}
-            <div>
-              <label className="block text-sm font-semibold mb-1.5 text-gray-700">Profile Image URL</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                  <ImageIcon size={18} className="text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  name="profileImageUrl"
-                  value={formData.profileImageUrl}
-                  onChange={handleInputChange}
-                  placeholder="https://example.com/image.jpg"
-                  className="w-full py-3 pl-10 pr-4 border-2 border-blue-200 rounded-xl text-sm text-gray-800 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                />
-              </div>
-              {formData.profileImageUrl && (
-                <div className="mt-3">
-                  <p className="text-xs text-gray-500 mb-2 font-medium">Preview:</p>
-                  <img
-                    src={formData.profileImageUrl}
-                    alt="Profile preview"
-                    className="w-24 h-24 rounded-xl object-cover border-2 border-blue-200"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
                 </div>
               )}
             </div>

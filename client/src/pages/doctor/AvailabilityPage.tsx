@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getMyAvailability, setAvailability, blockDate } from '../../services/doctorService';
+import { getMyAvailability, setAvailability, blockDate, unblockDate } from '../../services/doctorService';
 import { Calendar, Clock, Plus, Trash2, ToggleLeft, ToggleRight, Save, Loader2, X, AlertCircle, CheckCircle } from 'lucide-react';
 
 interface TimeSlot {
@@ -35,16 +35,45 @@ const AvailabilityPage = () => {
       const response = await getMyAvailability();
       const data = response.data;
       
-      // Initialize schedule from API response or defaults
+      console.log('Availability data from API:', data);
+      
+      // Convert backend array format to frontend day-name format
+      const dayMap: Record<number, string> = {
+        0: 'Sunday',
+        1: 'Monday',
+        2: 'Tuesday',
+        3: 'Wednesday',
+        4: 'Thursday',
+        5: 'Friday',
+        6: 'Saturday'
+      };
+      
       const initialSchedule: Record<string, DaySchedule> = {};
       daysOfWeek.forEach(day => {
-        initialSchedule[day] = {
-          enabled: data.weeklySchedule?.[day]?.enabled || false,
-          slots: data.weeklySchedule?.[day]?.slots || []
-        };
+        initialSchedule[day] = { enabled: false, slots: [] };
       });
+      
+      // If backend returns array format
+      if (Array.isArray(data.weeklySchedule)) {
+        data.weeklySchedule.forEach((daySchedule: any) => {
+          const dayName = dayMap[daySchedule.dayOfWeek];
+          if (dayName && daySchedule.slots) {
+            initialSchedule[dayName] = {
+              enabled: daySchedule.slots.length > 0,
+              slots: daySchedule.slots.map((slot: any, index: number) => ({
+                id: `${dayName}-${index}`,
+                startTime: slot.startTime,
+                endTime: slot.endTime
+              }))
+            };
+          }
+        });
+      }
+      
+      console.log('Initial schedule after conversion:', initialSchedule);
+      
       setSchedule(initialSchedule);
-      setBlockedDates(data.blockedDates || []);
+      setBlockedDates(data.blockedDates?.map((d: any) => new Date(d).toISOString().split('T')[0]) || []);
     } catch (err: any) {
       console.error('Error fetching availability:', err);
       // Initialize empty schedule on error
@@ -138,12 +167,41 @@ const AvailabilityPage = () => {
       }
     }
 
+    // Convert frontend format to backend format
+    const dayMap: Record<string, number> = {
+      'Sunday': 0,
+      'Monday': 1,
+      'Tuesday': 2,
+      'Wednesday': 3,
+      'Thursday': 4,
+      'Friday': 5,
+      'Saturday': 6
+    };
+
+    const backendSchedule = [];
+    for (const [dayName, daySchedule] of Object.entries(schedule)) {
+      if (daySchedule.enabled && daySchedule.slots.length > 0) {
+        backendSchedule.push({
+          dayOfWeek: dayMap[dayName],
+          slots: daySchedule.slots.map(slot => ({
+            startTime: slot.startTime,
+            endTime: slot.endTime,
+            isAvailable: true,
+            isBooked: false
+          }))
+        });
+      }
+    }
+
     setSaving(true);
     try {
-      await setAvailability({ weeklySchedule: schedule });
+      console.log('Sending to backend:', { weeklySchedule: backendSchedule });
+      await setAvailability({ weeklySchedule: backendSchedule });
       setSuccess('Schedule saved successfully!');
       setTimeout(() => setSuccess(''), 3000);
+      await fetchAvailability(); // Refresh the data after saving
     } catch (err: any) {
+      console.error('Error saving schedule:', err);
       setError(err.response?.data?.message || 'Failed to save schedule');
     } finally {
       setSaving(false);
@@ -177,9 +235,15 @@ const AvailabilityPage = () => {
   };
 
   const handleUnblockDate = async (date: string) => {
-    setBlockedDates(blockedDates.filter(d => d !== date));
-    setSuccess('Date unblocked');
-    setTimeout(() => setSuccess(''), 3000);
+    setError('');
+    try {
+      await unblockDate(date);
+      setBlockedDates(blockedDates.filter(d => d !== date));
+      setSuccess('Date unblocked successfully!');
+      setTimeout(() => setSuccess(''), 3000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to unblock date');
+    }
   };
 
   if (loading) {
