@@ -31,6 +31,7 @@ const DoctorDashboard = lazy(() => import('./pages/doctor/DoctorDashboard'));
 const DoctorOverviewPage = lazy(() => import('./pages/doctor/DoctorOverviewPage'));
 const DoctorProfilePage = lazy(() => import('./pages/doctor/DoctorProfilePage'));
 const AvailabilityPage = lazy(() => import('./pages/doctor/AvailabilityPage'));
+const DoctorAppointmentsPage = lazy(() => import('./pages/doctor/DoctorAppointmentsPage'));
 const DoctorPrescriptionsPage = lazy(() => import('./pages/doctor/PrescriptionsPage'));
 const PatientReportsPage = lazy(() => import('./pages/doctor/PatientReportsPage'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
@@ -134,6 +135,7 @@ function App() {
             <Route path="dashboard" element={<DoctorOverviewPage />} />
             <Route path="profile" element={<DoctorProfilePage />} />
             <Route path="availability" element={<AvailabilityPage />} />
+            <Route path="appointments" element={<DoctorAppointmentsPage />} />
             <Route path="prescriptions" element={<DoctorPrescriptionsPage />} />
             <Route path="patient-reports" element={<PatientReportsPage />} />
           </Route>

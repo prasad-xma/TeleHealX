@@ -4,30 +4,33 @@ import {
   Calendar, 
   Clock, 
   User, 
-  MapPin, 
   Plus, 
   Search, 
-  Filter,
   ArrowLeft,
   CheckCircle,
   AlertTriangle,
   Loader,
   Video,
-  Phone,
   Mail
 } from 'lucide-react';
+import {
+  getDoctorsForPatient,
+  getMyPatientAppointments,
+  createAppointmentForPatient,
+} from '../../services/appointmentService';
 
 interface Doctor {
   _id: string;
   name: string;
-  specialization?: string;
   email: string;
-  rating?: number;
+  role?: string;
+  isApproved?: boolean;
 }
 
 interface Appointment {
   _id: string;
-  doctorId: Doctor;
+  doctorId: string;
+  doctorName?: string;
   date: string;
   time: string;
   type: 'consultation' | 'checkup' | 'followup' | 'emergency';
@@ -38,13 +41,12 @@ interface Appointment {
 
 const AppointmentBooking = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [filteredAppointments, setFilteredAppointments] = useState<Appointment[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(false);
+  const [doctorLoading, setDoctorLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterType, setFilterType] = useState<'all' | 'consultation' | 'checkup' | 'followup'>('all');
   const [showBookingModal, setShowBookingModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState<Doctor | null>(null);
   const [selectedDate, setSelectedDate] = useState('');
@@ -57,50 +59,11 @@ const AppointmentBooking = () => {
     fetchDoctors();
   }, []);
 
-  useEffect(() => {
-    let filtered = appointments;
-    
-    if (searchTerm) {
-      filtered = filtered.filter(apt => 
-        apt.doctorId?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        apt.notes?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-    
-    if (filterType !== 'all') {
-      filtered = filtered.filter(apt => apt.type === filterType);
-    }
-    
-    setFilteredAppointments(filtered);
-  }, [appointments, searchTerm, filterType]);
-
   const fetchAppointments = async () => {
     setLoading(true);
     try {
-      // Mock data - in real implementation, this would fetch from API
-      const mockAppointments: Appointment[] = [
-        {
-          _id: '1',
-          doctorId: { _id: '1', name: 'Dr. Sarah Johnson', specialization: 'Cardiology', email: 'sarah.j@telehealx.com' },
-          date: '2024-04-20',
-          time: '10:00 AM',
-          type: 'consultation',
-          status: 'confirmed',
-          isVideoConsultation: true,
-          notes: 'Initial consultation for heart condition'
-        },
-        {
-          _id: '2',
-          doctorId: { _id: '2', name: 'Dr. Michael Chen', specialization: 'Internal Medicine', email: 'michael.c@telehealx.com' },
-          date: '2024-04-22',
-          time: '2:30 PM',
-          type: 'followup',
-          status: 'scheduled',
-          isVideoConsultation: false,
-          notes: 'Follow-up on previous consultation results'
-        }
-      ];
-      setAppointments(mockAppointments);
+      const response = await getMyPatientAppointments();
+      setAppointments(response?.appointments || []);
     } catch (error: any) {
       setError('Failed to fetch appointments');
     } finally {
@@ -108,21 +71,23 @@ const AppointmentBooking = () => {
     }
   };
 
-  const fetchDoctors = async () => {
+  const fetchDoctors = async (name = '') => {
+    setDoctorLoading(true);
     try {
-      // Mock data - in real implementation, this would fetch from API
-      const mockDoctors: Doctor[] = [
-        { _id: '1', name: 'Dr. Sarah Johnson', specialization: 'Cardiology', email: 'sarah.j@telehealx.com', rating: 4.8 },
-        { _id: '2', name: 'Dr. Michael Chen', specialization: 'Internal Medicine', email: 'michael.c@telehealx.com', rating: 4.6 },
-        { _id: '3', name: 'Dr. Emily Davis', specialization: 'Pediatrics', email: 'emily.d@telehealx.com', rating: 4.9 }
-      ];
-      setDoctors(mockDoctors);
+      const response = await getDoctorsForPatient(name, 5);
+      setDoctors(response?.doctors || []);
     } catch (error: any) {
       setError('Failed to fetch doctors');
+    } finally {
+      setDoctorLoading(false);
     }
   };
 
-  const handleBookAppointment = () => {
+  const handleDoctorSearch = () => {
+    fetchDoctors(searchTerm.trim());
+  };
+
+  const handleBookAppointment = async () => {
     if (!selectedDoctor || !selectedDate || !selectedTime) {
       setError('Please select doctor, date, and time for the appointment');
       return;
@@ -130,19 +95,21 @@ const AppointmentBooking = () => {
 
     setLoading(true);
     try {
-      // Mock API call - in real implementation, this would call the booking API
-      const newAppointment: Appointment = {
-        _id: Date.now().toString(),
-        doctorId: selectedDoctor,
+      const userRaw = localStorage.getItem('user');
+      const user = userRaw ? JSON.parse(userRaw) : null;
+
+      await createAppointmentForPatient({
+        doctorId: selectedDoctor._id,
+        doctorName: selectedDoctor.name,
         date: selectedDate,
         time: selectedTime,
         type: appointmentType,
-        status: 'scheduled',
-        notes: notes,
-        isVideoConsultation: appointmentType === 'consultation'
-      };
+        notes,
+        isVideoConsultation: appointmentType === 'consultation',
+        patientName: user?.name || 'Patient'
+      });
 
-      setAppointments([...appointments, newAppointment]);
+      await fetchAppointments();
       setSuccess('Appointment booked successfully!');
       
       // Reset form
@@ -155,7 +122,7 @@ const AppointmentBooking = () => {
       
       setTimeout(() => setSuccess(''), 3000);
     } catch (error: any) {
-      setError('Failed to book appointment');
+      setError(error.response?.data?.message || 'Failed to book appointment');
       setTimeout(() => setError(''), 3000);
     } finally {
       setLoading(false);
@@ -686,20 +653,14 @@ const AppointmentBooking = () => {
                     className="search-input"
                   />
                 </div>
-                
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="filter-select"
-                >
-                  <option value="all">All Specializations</option>
-                  <option value="cardiology">Cardiology</option>
-                  <option value="internal-medicine">Internal Medicine</option>
-                  <option value="pediatrics">Pediatrics</option>
-                </select>
+
+                <button className="book-btn" onClick={handleDoctorSearch}>
+                  <Search size={16} />
+                  Search
+                </button>
               </div>
 
-              {loading ? (
+              {doctorLoading ? (
                 <div className="loading">
                   <Loader size={24} className="spinner" />
                   Loading doctors...
@@ -715,11 +676,9 @@ const AppointmentBooking = () => {
                       <div className="doctor-header">
                         <div>
                           <div className="doctor-name">{doctor.name}</div>
-                          <div className="doctor-specialization">{doctor.specialization}</div>
+                          <div className="doctor-specialization">{doctor.email}</div>
                         </div>
-                        <div className="doctor-rating">
-                          {'⭐'.repeat(doctor.rating || 0)}
-                        </div>
+                        <div className="doctor-rating">{doctor.isApproved ? 'Approved' : 'Pending'}</div>
                       </div>
                       <div className="appointment-details">
                         <div><Mail size={16} /> {doctor.email}</div>
@@ -744,7 +703,7 @@ const AppointmentBooking = () => {
                   <Loader size={24} className="spinner" />
                   Loading appointments...
                 </div>
-              ) : filteredAppointments.length === 0 ? (
+              ) : appointments.length === 0 ? (
                 <div className="empty-state">
                   <div className="empty-icon">
                     <Calendar size={40} />
@@ -754,7 +713,7 @@ const AppointmentBooking = () => {
                 </div>
               ) : (
                 <div className="appointments-list">
-                  {filteredAppointments.map((appointment) => (
+                  {appointments.map((appointment) => (
                     <div key={appointment._id} className="appointment-card">
                       <div className="appointment-header">
                         <div className="appointment-status" style={{ background: getStatusColor(appointment.status) }}>
@@ -764,7 +723,7 @@ const AppointmentBooking = () => {
                           </span>
                         </div>
                         <div className="appointment-title">
-                          {appointment.doctorId?.name}
+                          {appointment.doctorName || 'Doctor'}
                           {appointment.isVideoConsultation && (
                             <Video size={16} style={{ marginLeft: '0.5rem' }} />
                           )}
@@ -812,7 +771,7 @@ const AppointmentBooking = () => {
                       <option value="">Choose a doctor...</option>
                       {doctors.map((doctor) => (
                         <option key={doctor._id} value={doctor._id}>
-                          {doctor.name} - {doctor.specialization}
+                          {doctor.name} - {doctor.email}
                         </option>
                       ))}
                     </select>
