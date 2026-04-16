@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 
 const prescriptionSchema = new mongoose.Schema({
+    prescriptionNumber: {
+        type: String,
+        unique: true,
+        trim: true
+    },
     patientId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'User',
@@ -56,6 +61,17 @@ const prescriptionSchema = new mongoose.Schema({
     }
 }, {
     timestamps: true
+});
+
+// Generate unique prescription number before saving
+prescriptionSchema.pre('save', async function(next) {
+    if (!this.prescriptionNumber) {
+        const Prescription = mongoose.model('Prescription');
+        const count = await Prescription.countDocuments();
+        const year = new Date().getFullYear();
+        this.prescriptionNumber = `RX${year}${String(count + 1).padStart(6, '0')}`;
+    }
+    next();
 });
 
 module.exports = mongoose.model('Prescription', prescriptionSchema);

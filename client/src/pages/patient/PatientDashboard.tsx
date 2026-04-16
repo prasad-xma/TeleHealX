@@ -16,11 +16,12 @@ import {
   CheckCircle,
   Calendar
 } from 'lucide-react';
-import { 
-  getMedicalHistory, 
-  getMedicalReports, 
+import {
+  getMedicalHistory,
+  getMedicalReports,
   getPrescriptions,
-  deleteMedicalReport 
+  deleteMedicalReport,
+  downloadMedicalReport
 } from '../../services/patientService';
 import { analyzeSymptoms } from '../../services/aiService';
 
@@ -53,8 +54,10 @@ const PatientDashboard = () => {
   const fetchMedicalHistory = async () => {
     setLoading(true);
     try {
-      const data = await getMedicalHistory();
-      setMedicalHistory(data);
+      const response = await getMedicalHistory();
+      // Backend returns { message: '...', data: [...] }
+      const records = Array.isArray(response) ? response : (response?.data ?? []);
+      setMedicalHistory(records);
     } catch (error: any) {
       setError('Failed to fetch medical history');
     } finally {
@@ -65,8 +68,10 @@ const PatientDashboard = () => {
   const fetchMedicalReports = async () => {
     setLoading(true);
     try {
-      const data = await getMedicalReports();
-      setMedicalReports(data);
+      const response = await getMedicalReports();
+      // Backend returns array directly, but normalize defensively
+      const reports = Array.isArray(response) ? response : (response?.data ?? []);
+      setMedicalReports(reports);
     } catch (error: any) {
       setError('Failed to fetch medical reports');
     } finally {
@@ -77,8 +82,10 @@ const PatientDashboard = () => {
   const fetchPrescriptions = async () => {
     setLoading(true);
     try {
-      const data = await getPrescriptions();
-      setPrescriptions(data);
+      const response = await getPrescriptions();
+      // Backend returns array directly, but normalize defensively
+      const list = Array.isArray(response) ? response : (response?.data ?? []);
+      setPrescriptions(list);
     } catch (error: any) {
       setError('Failed to fetch prescriptions');
     } finally {
@@ -97,6 +104,75 @@ const PatientDashboard = () => {
         setError('Failed to delete report');
         setTimeout(() => setError(''), 3000);
       }
+    }
+  };
+
+  const handleViewReport = async (reportId: string, fileName: string) => {
+    try {
+      console.log('handleViewReport called with reportId:', reportId, 'fileName:', fileName);
+      const response = await downloadMedicalReport(reportId);
+      console.log('Response received:', response);
+      const binaryString = atob(response.fileData);
+      console.log('Base64 decoded, length:', binaryString.length);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      console.log('Bytes array created, length:', bytes.length);
+      const blob = new Blob([bytes], { type: response.mimeType });
+      console.log('Blob created:', blob);
+      const url = window.URL.createObjectURL(blob);
+      console.log('Object URL created:', url);
+
+      // For images, open in new tab; for documents, download them
+      if (response.mimeType.startsWith('image/')) {
+        window.open(url, '_blank');
+        console.log('Image opened in new tab');
+      } else {
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', response.fileName);
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+        window.URL.revokeObjectURL(url);
+        console.log('Document downloaded');
+      }
+    } catch (error: any) {
+      console.error('Error in handleViewReport:', error);
+      setError('Failed to view report');
+      setTimeout(() => setError(''), 3000);
+    }
+  };
+
+  const handleDownloadReport = async (reportId: string, fileName: string) => {
+    try {
+      console.log('handleDownloadReport called with reportId:', reportId, 'fileName:', fileName);
+      const response = await downloadMedicalReport(reportId);
+      console.log('Response received:', response);
+      const binaryString = atob(response.fileData);
+      console.log('Base64 decoded, length:', binaryString.length);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      console.log('Bytes array created, length:', bytes.length);
+      const blob = new Blob([bytes], { type: response.mimeType });
+      console.log('Blob created:', blob);
+      const url = window.URL.createObjectURL(blob);
+      console.log('Object URL created:', url);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', response.fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      console.log('Download completed');
+    } catch (error: any) {
+      console.error('Error in handleDownloadReport:', error);
+      setError('Failed to download report');
+      setTimeout(() => setError(''), 3000);
     }
   };
 
@@ -590,7 +666,7 @@ const PatientDashboard = () => {
                   </div>
                   <div className="overview-title">Active Prescriptions</div>
                   <div className="overview-value">
-                    {prescriptions.filter(p => p.isActive).length}
+                    {(Array.isArray(prescriptions) ? prescriptions : []).filter((p: any) => p.isActive).length}
                   </div>
                 </div>
                 
@@ -722,13 +798,19 @@ const PatientDashboard = () => {
                         <td>{(report.fileSize / 1024).toFixed(1)} KB</td>
                         <td>
                           <div className="action-icons">
-                            <button className="icon-btn">
+                            <button
+                              className="icon-btn"
+                              onClick={() => handleViewReport(report._id, report.fileName)}
+                            >
                               <Eye size={16} />
                             </button>
-                            <button className="icon-btn">
+                            <button
+                              className="icon-btn"
+                              onClick={() => handleDownloadReport(report._id, report.fileName)}
+                            >
                               <Download size={16} />
                             </button>
-                            <button 
+                            <button
                               className="icon-btn delete"
                               onClick={() => handleDeleteReport(report._id)}
                             >

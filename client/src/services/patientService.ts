@@ -60,6 +60,29 @@ export const deleteMedicalReport = async (reportId: string) => {
   }
 };
 
+export const downloadMedicalReport = async (reportId: string) => {
+  try {
+    console.log('downloadMedicalReport called with reportId:', reportId);
+    console.log('API_BASE_URL:', API_BASE_URL);
+    console.log('Full URL:', `${API_BASE_URL}/reports/${reportId}`);
+    const token = localStorage.getItem('token');
+    console.log('Token exists:', !!token);
+    const response = await axios.get(`${API_BASE_URL}/reports/${reportId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    console.log('API response status:', response.status);
+    console.log('API response data:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('Error in downloadMedicalReport:', error);
+    console.error('Error response:', error.response);
+    console.error('Error message:', error.message);
+    throw error;
+  }
+};
+
 export const getPrescriptions = async () => {
   try {
     const token = localStorage.getItem('token');
