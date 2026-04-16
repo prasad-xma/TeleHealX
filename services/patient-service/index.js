@@ -42,7 +42,7 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/api/patients', patientRoutes);
 
-const PORT = process.env.PORT || 5003;
+const PORT = process.env.PORT || 5015;
 app.listen(PORT, () => {
     console.log(`Patient Service running on port ${PORT}`);
 });
