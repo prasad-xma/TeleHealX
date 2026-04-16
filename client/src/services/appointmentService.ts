@@ -49,6 +49,7 @@ export const getMyPatientAppointments = async () => {
 
 export const createAppointmentForPatient = async (payload: {
   doctorId: string;
+  doctorName?: string;
   date: string;
   time: string;
   type: 'consultation' | 'checkup' | 'followup';
@@ -58,6 +59,18 @@ export const createAppointmentForPatient = async (payload: {
 }) => {
   try {
     const response = await axios.post(`${API_BASE_URL}/patient/book`, payload, {
+      headers: authHeader()
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+export const createMeetingForDoctorAppointment = async (appointmentId: string) => {
+  try {
+    const response = await axios.patch(`${API_BASE_URL}/doctor/${appointmentId}/meeting`, {}, {
       headers: authHeader()
     });
 
