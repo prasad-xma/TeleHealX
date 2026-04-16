@@ -11,6 +11,41 @@ const buildIdentity = (user) => {
   return `${user.role}-${user.id}`;
 };
 
+const ensureMeetingAccess = async ({ roomName, authorizationHeader }) => {
+  const appointmentServiceUrl = process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5007';
+  const trimmedRoomName = String(roomName || '').trim();
+
+  if (!trimmedRoomName) {
+    throw new Error('roomName is required');
+  }
+
+  if (!authorizationHeader) {
+    throw new Error('Authorization header is required');
+  }
+
+  const query = new URLSearchParams({ roomName: trimmedRoomName }).toString();
+  const response = await fetch(`${appointmentServiceUrl}/api/appointments/meeting/access?${query}`, {
+    method: 'GET',
+    headers: {
+      Authorization: authorizationHeader,
+      Accept: 'application/json'
+    }
+  });
+
+  let payload = null;
+  try {
+    payload = await response.json();
+  } catch (error) {
+    payload = null;
+  }
+
+  if (!response.ok || !payload?.success) {
+    throw new Error(payload?.message || 'Meeting access denied');
+  }
+
+  return payload.data;
+};
+
 const generateToken = ({ user, roomName }) => {
   if (!process.env.TWILIO_ACCOUNT_SID || !process.env.TWILIO_API_KEY || !process.env.TWILIO_API_SECRET) {
     throw new Error('Twilio configuration is missing');
@@ -48,4 +83,5 @@ module.exports = {
   generateToken,
   isValidRoomName,
   buildIdentity,
+  ensureMeetingAccess,
 };
