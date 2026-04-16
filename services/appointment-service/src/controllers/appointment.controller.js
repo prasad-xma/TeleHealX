@@ -17,14 +17,16 @@ const getMyAppointmentAccessInfo = asyncHandler(async (req, res) => {
 const getMyDoctorAppointments = asyncHandler(async (req, res) => {
   const result = await appointmentService.getAppointmentsForDoctor(req.user.userId);
 
-  return sendSuccess(res, result, 'Doctor appointments fetched successfully');
+  return sendSuccess(res, result, "Doctor appointments fetched successfully");
 });
 
 const getDoctorsForPatient = asyncHandler(async (req, res) => {
-  const { name = '', limit = 5 } = req.query;
+  const name = typeof req.query.name === "string" ? req.query.name.trim() : "";
+  const limit = Number(req.query.limit || 10);
+
   const result = await appointmentService.getDoctorsForPatient({ name, limit });
 
-  return sendSuccess(res, result, 'Doctors fetched successfully');
+  return sendSuccess(res, result, "Doctors fetched successfully");
 });
 
 const createAppointmentForPatient = asyncHandler(async (req, res) => {
@@ -33,20 +35,30 @@ const createAppointmentForPatient = asyncHandler(async (req, res) => {
   console.log('📨 [APPOINTMENT CONTROLLER] User from token:', req.user);
 
   const { doctorId, doctorName, date, time, type, notes, isVideoConsultation, patientName } = req.body;
+  const {
+    doctorId,
+    doctorName,
+    date,
+    time,
+    type,
+    notes,
+    isVideoConsultation,
+    patientName
+  } = req.body;
 
   console.log('🔍 [APPOINTMENT CONTROLLER] Validating request data...');
   if (!doctorId || !date || !time) {
     console.error('❌ [APPOINTMENT CONTROLLER] Missing required fields:', { doctorId, date, time });
     return res.status(400).json({
       success: false,
-      message: 'doctorId, date and time are required'
+      message: "doctorId, date and time are required"
     });
   }
 
   console.log('⚙️ [APPOINTMENT CONTROLLER] Calling appointment service...');
   const result = await appointmentService.createAppointmentForPatient({
     patientId: req.user.userId,
-    patientName: patientName || 'Patient',
+    patientName: patientName || "Patient",
     doctorId,
     doctorName,
     date,
@@ -58,42 +70,46 @@ const createAppointmentForPatient = asyncHandler(async (req, res) => {
 
   console.log('✅ [APPOINTMENT CONTROLLER] Appointment created successfully:', result._id);
   return sendSuccess(res, result, 'Appointment created successfully', 201);
+  return sendSuccess(res, result, "Appointment created successfully", 201);
 });
 
 const getMyPatientAppointments = asyncHandler(async (req, res) => {
   const result = await appointmentService.getAppointmentsForPatient(req.user.userId);
 
-  return sendSuccess(res, result, 'Patient appointments fetched successfully');
+  return sendSuccess(res, result, "Patient appointments fetched successfully");
 });
 
-const getMeetingAccess = asyncHandler(async (req, res) => {
-  const { roomName = '' } = req.query;
-
-  const result = await appointmentService.getMeetingAccessForUser({
-    roomName,
-    userId: req.user.userId,
-    role: req.user.role
-  });
-
-  return sendSuccess(res, result, 'Meeting access validated successfully');
-});
-
-const createMeetingForDoctorAppointment = asyncHandler(async (req, res) => {
+const getAppointmentById = asyncHandler(async (req, res) => {
   const { appointmentId } = req.params;
+  const result = await appointmentService.getAppointmentById(appointmentId);
 
-  if (!appointmentId) {
+  return sendSuccess(res, result, 'Appointment fetched successfully');
+});
+
+const getAppointmentByRoomName = asyncHandler(async (req, res) => {
+  const { roomName = '' } = req.params;
+  const result = await appointmentService.getAppointmentByRoomName(roomName);
+
+  return sendSuccess(res, result, 'Appointment fetched successfully');
+});
+
+const updateMeetingRoomForAppointment = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+  const { meetingRoomName } = req.body;
+
+  if (!appointmentId || !meetingRoomName) {
     return res.status(400).json({
       success: false,
-      message: 'appointmentId is required'
+      message: 'appointmentId and meetingRoomName are required'
     });
   }
 
-  const result = await appointmentService.createMeetingForAppointment({
+  const result = await appointmentService.updateMeetingRoomForAppointment({
     appointmentId,
-    doctorUserId: req.user.userId
+    meetingRoomName
   });
 
-  return sendSuccess(res, result, 'Meeting created successfully');
+  return sendSuccess(res, result, 'Meeting room updated successfully');
 });
 
 const completeConsultation = asyncHandler(async (req, res) => {
@@ -126,4 +142,7 @@ module.exports = {
   createMeetingForDoctorAppointment,
   getMeetingAccess,
   completeConsultation
+  getAppointmentById,
+  getAppointmentByRoomName,
+  updateMeetingRoomForAppointment
 };
