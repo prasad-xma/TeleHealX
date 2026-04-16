@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const mongoose = require('mongoose');
 const User = require('../models/User');
 const DoctorApplication = require('../models/DoctorApplication');
 const { generateToken } = require('../utils/jwtUtils');
@@ -19,11 +20,13 @@ const register = async (payload) => {
 		throw new Error('Please fill all required fields');
 	}
 
-	if (role !== 'patient' && role !== 'doctor' && role !== 'admin') {
+	if (!['patient', 'doctor', 'admin'].includes(role)) {
 		throw new Error('Invalid role');
 	}
 
-	const existingUser = await User.findOne({ email });
+	const normalizedEmail = email.trim().toLowerCase();
+
+	const existingUser = await User.findOne({ email: normalizedEmail });
 	if (existingUser) {
 		throw new Error('Email already exists');
 	}
@@ -43,11 +46,11 @@ const register = async (payload) => {
 	const hashedPassword = await bcrypt.hash(password, 10);
 
 	const user = await User.create({
-		name,
+		name: name.trim(),
 		birthDay,
 		gender,
-		address,
-		email,
+		address: address.trim(),
+		email: normalizedEmail,
 		password: hashedPassword,
 		role,
 		isApproved: role === 'doctor' ? false : true,
@@ -56,9 +59,9 @@ const register = async (payload) => {
 	if (role === 'doctor') {
 		await DoctorApplication.create({
 			user: user._id,
-			specialization: doctorInfo.specialization,
-			licenseNumber: doctorInfo.licenseNumber,
-			hospital: doctorInfo.hospital,
+			specialization: doctorInfo.specialization.trim(),
+			licenseNumber: doctorInfo.licenseNumber.trim(),
+			hospital: doctorInfo.hospital.trim(),
 			yearsOfExperience: doctorInfo.yearsOfExperience,
 			status: 'pending',
 		});
@@ -86,7 +89,9 @@ const login = async (payload) => {
 		throw new Error('Email and password are required');
 	}
 
-	const user = await User.findOne({ email });
+	const normalizedEmail = email.trim().toLowerCase();
+
+	const user = await User.findOne({ email: normalizedEmail });
 	if (!user) {
 		throw new Error('Invalid email or password');
 	}
@@ -130,6 +135,10 @@ const getProfile = async (userId) => {
 };
 
 const approveDoctor = async (userId) => {
+	if (!mongoose.Types.ObjectId.isValid(userId)) {
+		throw new Error('Invalid user id');
+	}
+
 	const user = await User.findById(userId);
 	if (!user) {
 		throw new Error('User not found');
@@ -139,13 +148,16 @@ const approveDoctor = async (userId) => {
 		throw new Error('This user is not a doctor');
 	}
 
+	const doctorApplication = await DoctorApplication.findOne({ user: user._id });
+	if (!doctorApplication) {
+		throw new Error('Doctor application not found');
+	}
+
 	user.isApproved = true;
 	await user.save();
 
-	await DoctorApplication.findOneAndUpdate(
-		{ user: user._id },
-		{ status: 'approved' }
-	);
+	doctorApplication.status = 'approved';
+	await doctorApplication.save();
 
 	return {
 		message: 'Doctor approved successfully',
@@ -153,10 +165,9 @@ const approveDoctor = async (userId) => {
 };
 
 const getPendingDoctorApplications = async () => {
-	return DoctorApplication.find({ status: 'pending' }).populate(
-		'user',
-		'name email role isApproved'
-	);
+	return await DoctorApplication.find({ status: 'pending' })
+		.populate('user', 'name email role isApproved')
+		.sort({ createdAt: -1 });
 };
 
 const getApprovedDoctors = async ({ name = '', limit = 5 }) => {
