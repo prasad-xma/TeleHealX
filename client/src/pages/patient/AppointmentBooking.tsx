@@ -1,5 +1,5 @@
 import { useState, useEffect, type ReactElement } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
   Clock, 
@@ -18,7 +18,6 @@ import {
   getMyPatientAppointments,
   createAppointmentForPatient,
 } from '../../services/appointmentService';
-import { createTelemedicineToken } from '../../services/telemedicineService';
 
 interface Doctor {
   _id: string;
@@ -42,6 +41,7 @@ interface Appointment {
 }
 
 const AppointmentBooking = () => {
+  const navigate = useNavigate();
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [doctors, setDoctors] = useState<Doctor[]>([]);
   const [loading, setLoading] = useState(false);
@@ -171,8 +171,7 @@ const AppointmentBooking = () => {
 
   const handleJoinMeeting = async (roomName: string) => {
     try {
-      await createTelemedicineToken(roomName);
-      window.open(`https://meet.jit.si/${roomName}`, '_blank');
+      navigate(`/video-call/${encodeURIComponent(roomName)}`);
     } catch (error: any) {
       setError(error.response?.data?.message || 'Unable to join meeting');
       setTimeout(() => setError(''), 3000);
