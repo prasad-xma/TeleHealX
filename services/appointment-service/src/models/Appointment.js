@@ -11,6 +11,7 @@ const appointmentSchema = new mongoose.Schema(
     appointmentNumber: {
       type: String,
       unique: true,
+      required: true
       index: true,
       trim: true
     },
