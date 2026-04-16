@@ -12,8 +12,7 @@ import {
   Download,
   Trash2,
   AlertTriangle,
-  Loader,
-  CheckCircle
+  Loader
 } from 'lucide-react';
 import { getMedicalHistory } from '../../services/patientService';
 
@@ -29,7 +28,7 @@ const MedicalHistoryManagement = () => {
         setIsLoading(true);
         const response = await getMedicalHistory();
         console.log('Medical history response:', response);
-        setMedicalHistory(response.data || []);
+        setMedicalHistory(response || []);
         setError('');
       } catch (err: any) {
         console.error('Error fetching medical history:', err);

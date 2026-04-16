@@ -21,8 +21,10 @@ const ProfileManagement = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  const userRaw = localStorage.getItem('user');
-  const user = userRaw ? JSON.parse(userRaw) : null;
+  const [user, setUser] = useState(() => {
+    const userRaw = localStorage.getItem('user');
+    return userRaw ? JSON.parse(userRaw) : null;
+  });
 
   const [formData, setFormData] = useState({
     name: user?.name || '',
@@ -98,6 +100,7 @@ const ProfileManagement = () => {
       
       const updatedUser = { ...user, ...formData };
       localStorage.setItem('user', JSON.stringify(updatedUser));
+      setUser(updatedUser);
       
       setIsEditing(false);
       setTimeout(() => setSuccess(''), 3000);
