@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/User');
 const DoctorApplication = require('../models/DoctorApplication');
+const DoctorProfile = require('../models/DoctorProfile');
 const { generateToken } = require('../utils/jwtUtils');
 
 const register = async (payload) => {
@@ -67,6 +68,18 @@ const register = async (payload) => {
 			hospital: doctorInfo.hospital,
 			yearsOfExperience: doctorInfo.yearsOfExperience,
 			status: 'pending',
+		});
+
+		await DoctorProfile.create({
+			userId: user._id,
+			specialization: doctorInfo.specialization,
+			licenseNumber: doctorInfo.licenseNumber,
+			hospital: doctorInfo.hospital,
+			yearsOfExperience: doctorInfo.yearsOfExperience,
+			consultationFee: doctorInfo.consultationFee || 0,
+			bio: doctorInfo.bio || '',
+			languages: doctorInfo.languages || [],
+			isVerified: false,
 		});
 	}
 
@@ -149,6 +162,11 @@ const approveDoctor = async (userId) => {
 
 	user.isApproved = true;
 	await user.save();
+
+	await DoctorProfile.findOneAndUpdate(
+		{ userId: user._id },
+		{ isVerified: true }
+	);
 
 	await DoctorApplication.findOneAndUpdate(
 		{ user: user._id },

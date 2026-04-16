@@ -31,13 +31,7 @@ const getDoctorProfile = async (req, res) => {
 
 const updateDoctorProfile = async (req, res) => {
 	try {
-		const { bio, consultationFee, languages, profileImage } = req.body;
-		const doctor = await doctorService.updateDoctorProfile(req.user._id, {
-			bio,
-			consultationFee,
-			languages,
-			profileImage,
-		});
+		const doctor = await doctorService.updateDoctorProfile(req.user._id, req.body);
 		return res.status(200).json(doctor);
 	} catch (error) {
 		return res.status(400).json({ message: error.message });
