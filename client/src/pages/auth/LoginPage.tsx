@@ -73,30 +73,40 @@ const LoginPage = () => {
     setIsLoading(true);
     try {
       const response = await loginService(formData);
-      setSuccess(response.data?.message || 'Login successful');
       
-      // Store token in localStorage
-      if (response.data?.token) {
+      // Check response structure more safely
+      if (!response || !response.data) {
+        throw new Error('Invalid response from server');
+      }
+      
+      setSuccess(response.data.message || 'Login successful');
+      
+      // Store token in localStorage with validation
+      if (response.data.token && response.data.user) {
         localStorage.setItem('token', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
-        localStorage.setItem('userRole', response.data.user.role);
-        localStorage.setItem('userName', response.data.user.name);
+        localStorage.setItem('userRole', response.data.user.role || 'patient');
+        localStorage.setItem('userName', response.data.user.name || 'User');
+      } else {
+        throw new Error('Invalid login response: missing token or user data');
       }
       
       setTimeout(() => {
-        if (response.data?.user?.role === 'patient') {
+        const userRole = response.data.user?.role;
+        
+        if (userRole === 'patient') {
           navigate('/dashboard');
           return;
         }
 
-        if (response.data?.user?.role === 'admin') {
+        if (userRole === 'admin') {
           navigate('/admin');
           return;
         }
 
-        if (response.data?.user?.role === 'doctor') {
+        if (userRole === 'doctor') {
           // Check if doctor is approved
-          if (response.data.user.isApproved) {
+          if (response.data.user?.isApproved) {
             navigate('/dashboard');
           } else {
             navigate('/doctor-login-blocked');
@@ -104,10 +114,13 @@ const LoginPage = () => {
           return;
         }
 
-        navigate('/login');
+        // Default fallback
+        navigate('/landing');
       }, 1000);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+      console.error('Login error:', err);
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
