@@ -524,12 +524,6 @@ const getDoctorSlotsForPatient = async ({ doctorId, date }) => {
   };
 };
 
-const createAppointmentForPatient = async ({ patientId, patientName, doctorId, doctorName, date, time, type, notes, isVideoConsultation }) => {
-  console.log('🔄 [APPOINTMENT SERVICE] Starting appointment creation:', { patientId, doctorId, date, time });
-
-  if (!doctorId) {
-    console.error('❌ [APPOINTMENT SERVICE] Doctor ID is required');
-    throw new Error('Doctor is required');
 const createAppointmentForPatient = async ({
   patientId,
   patientName,
@@ -591,12 +585,7 @@ const createAppointmentForPatient = async ({
 
   const appointmentNumber = await createUniqueAppointmentNumber();
 
-  // Generate unique appointment number
-  const timestamp = Date.now();
-  const randomSuffix = Math.random().toString(36).substring(2, 8).toUpperCase();
-  const appointmentNumber = `APT-${timestamp}-${randomSuffix}`;
-
-  console.log('📝 [APPOINTMENT SERVICE] Creating appointment in database with number:', appointmentNumber);
+  console.log('[APPOINTMENT SERVICE] Creating appointment in database with number:', appointmentNumber);
   const created = await Appointment.create({
     appointmentNumber,
     doctorId,
@@ -625,13 +614,13 @@ const createAppointmentForPatient = async ({
     ]
   });
 
-  console.log('✅ [APPOINTMENT SERVICE] Appointment created successfully:', created._id);
+  console.log('[APPOINTMENT SERVICE] Appointment created successfully:', created._id);
 
   // Send appointment booking notifications asynchronously
   try {
-    console.log('📤 [APPOINTMENT SERVICE] Starting notification process...');
+    console.log('[APPOINTMENT SERVICE] Starting notification process...');
 
-    console.log('🔍 [APPOINTMENT SERVICE] Fetching patient data from auth service...');
+    console.log('[APPOINTMENT SERVICE] Fetching patient data from auth service...');
     const patientResponse = await axios.get(`${env.authServiceUrl}/api/auth/users/${patientId}`, {
       timeout: 5000,
       headers: {
@@ -639,9 +628,9 @@ const createAppointmentForPatient = async ({
       }
     });
     const patientData = patientResponse.data;
-    console.log('✅ [APPOINTMENT SERVICE] Patient data fetched:', { name: patientData.name, email: patientData.email });
+    console.log('[APPOINTMENT SERVICE] Patient data fetched:', { name: patientData.name, email: patientData.email });
 
-    console.log('🔍 [APPOINTMENT SERVICE] Fetching doctor data from auth service...');
+    console.log('[APPOINTMENT SERVICE] Fetching doctor data from auth service...');
     const doctorResponse = await axios.get(`${env.authServiceUrl}/api/auth/doctors/${doctorId}`, {
       timeout: 5000,
       headers: {
@@ -649,9 +638,9 @@ const createAppointmentForPatient = async ({
       }
     });
     const doctorData = doctorResponse.data;
-    console.log('✅ [APPOINTMENT SERVICE] Doctor data fetched:', { name: doctorData.name, email: doctorData.email });
+    console.log('[APPOINTMENT SERVICE] Doctor data fetched:', { name: doctorData.name, email: doctorData.email });
 
-    console.log('📧 [APPOINTMENT SERVICE] Sending notifications to notification service...');
+    console.log('[APPOINTMENT SERVICE] Sending notifications to notification service...');
     await axios.post(`${env.notificationServiceUrl}/api/notifications/appointment-booked`, {
       appointmentData: {
         _id: created._id,
@@ -679,15 +668,15 @@ const createAppointmentForPatient = async ({
       }
     });
 
-    console.log('✅ [APPOINTMENT SERVICE] Notifications sent successfully');
+    console.log('[APPOINTMENT SERVICE] Notifications sent successfully');
 
   } catch (notificationError) {
-    console.error('❌ [APPOINTMENT SERVICE] Failed to send appointment booking notifications:', notificationError.message);
-    console.error('❌ [APPOINTMENT SERVICE] Notification error details:', notificationError.response?.data || notificationError);
+    console.error('[APPOINTMENT SERVICE] Failed to send appointment booking notifications:', notificationError.message);
+    console.error('[APPOINTMENT SERVICE] Notification error details:', notificationError.response?.data || notificationError);
     // Log notification error but don't fail the appointment creation
   }
 
-  console.log('🎉 [APPOINTMENT SERVICE] Appointment creation completed successfully');
+  console.log('[APPOINTMENT SERVICE] Appointment creation completed successfully');
   return created;
 };
 
@@ -1017,6 +1006,8 @@ const getMeetingAccessForUser = async ({ roomName, userId, role }) => {
     doctorName: appointment.doctorName || "Doctor",
     patientName: appointment.patientName || "Patient"
   };
+};
+
 const completeConsultation = async ({ appointmentId, doctorUserId, prescriptionIssued = false }) => {
   const appointment = await Appointment.findOne({
     _id: appointmentId,
@@ -1106,11 +1097,6 @@ module.exports = {
   completeDoctorAppointment,
   updateAppointmentPaymentStatusInternal,
   createMeetingForAppointment,
-  getMeetingAccessForUser
-  createMeetingForAppointment,
   getMeetingAccessForUser,
   completeConsultation
-  getAppointmentById,
-  getAppointmentByRoomName,
-  updateMeetingRoomForAppointment
 };
