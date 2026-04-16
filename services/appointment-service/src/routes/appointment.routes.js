@@ -4,11 +4,11 @@ const {
   getMyAppointmentAccessInfo,
   getMyDoctorAppointments,
   getDoctorsForPatient,
+  getDoctorDetailsForPatient,
   createAppointmentForPatient,
   getMyPatientAppointments,
-  getAppointmentById,
-  getAppointmentByRoomName,
-  updateMeetingRoomForAppointment
+  createMeetingForDoctorAppointment,
+  getMeetingAccess
 } = require("../controllers/appointment.controller");
 const { protect, authorize } = require("../middlewares/auth.middleware");
 
@@ -20,16 +20,15 @@ router.get("/me", protect, authorize("patient", "doctor", "admin"), getMyAppoint
 
 router.get("/doctor/me", protect, authorize("doctor"), getMyDoctorAppointments);
 
-router.get('/:appointmentId', protect, authorize('patient', 'doctor', 'admin'), getAppointmentById);
+router.patch("/doctor/:appointmentId/meeting", protect, authorize("doctor"), createMeetingForDoctorAppointment);
 
-router.get('/meeting/room/:roomName', protect, authorize('patient', 'doctor'), getAppointmentByRoomName);
+router.get("/meeting/access", protect, authorize("patient", "doctor"), getMeetingAccess);
 
-router.patch('/:appointmentId/meeting-room', protect, authorize('doctor'), updateMeetingRoomForAppointment);
+router.get("/patient/doctors", protect, authorize("patient"), getDoctorsForPatient);
+router.get("/patient/doctors/:doctorId", protect, authorize("patient"), getDoctorDetailsForPatient);
 
-router.get('/patient/doctors', protect, authorize('patient'), getDoctorsForPatient);
+router.get("/patient/me", protect, authorize("patient"), getMyPatientAppointments);
 
-router.get('/patient/me', protect, authorize('patient'), getMyPatientAppointments);
-
-router.post('/patient/book', protect, authorize('patient'), createAppointmentForPatient);
+router.post("/patient/book", protect, authorize("patient"), createAppointmentForPatient);
 
 module.exports = router;
