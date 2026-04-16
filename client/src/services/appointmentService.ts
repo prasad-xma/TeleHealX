@@ -57,6 +57,8 @@ export interface DoctorAppointmentsResponse {
     time: string;
     type: 'consultation' | 'checkup' | 'followup' | 'emergency';
     status: string;
+    paymentMode?: 'MANUAL' | 'ONLINE';
+    paymentStatus?: string;
     notes?: string;
     isVideoConsultation?: boolean;
     meetingRoomName?: string;
@@ -160,6 +162,18 @@ export const getMyDoctorAppointments = async () => {
       status: normalizeDoctorAppointmentStatus(appointment.status)
     }))
   } as DoctorAppointmentsResponse;
+};
+
+export const acceptDoctorAppointment = async (appointmentId: string) => {
+  const response = await axios.patch(
+    `${APPOINTMENT_API_BASE_URL}/doctor/${appointmentId}/accept`,
+    {},
+    {
+      headers: getAuthHeaders()
+    }
+  );
+
+  return response.data?.data;
 };
 
 export const getMeetingAccess = async (roomName: string) => {

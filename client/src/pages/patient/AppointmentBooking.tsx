@@ -322,6 +322,10 @@ const AppointmentBooking = () => {
     return colors[normalized] || '#6B7280';
   };
 
+  const isAcceptedAppointment = (status: string) => {
+    return String(status || '').toUpperCase() === 'CONFIRMED';
+  };
+
   const availableSlots = slots.filter((slot) => slot.isAvailable);
   const bookedSlots = slots.filter((slot) => !slot.isAvailable);
 
@@ -1134,8 +1138,14 @@ const AppointmentBooking = () => {
                           className="badge"
                           style={{ background: getStatusColor(appointment.status) }}
                         >
-                          {appointment.status}
+                          {String(appointment.status || '').toUpperCase() === 'CONFIRMED' ? 'Approved' : appointment.status}
                         </span>
+
+                        {isAcceptedAppointment(appointment.status) ? (
+                          <span className="badge" style={{ background: '#10B981' }}>
+                            Accepted
+                          </span>
+                        ) : null}
 
                         <span
                           className="payment-badge"
