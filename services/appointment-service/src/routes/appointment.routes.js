@@ -11,6 +11,8 @@ const {
   getPatientAppointmentById,
   cancelPatientAppointment,
   reschedulePatientAppointment,
+  cancelDoctorAppointment,
+  completeDoctorAppointment,
   createMeetingForDoctorAppointment,
   getMeetingAccess
 } = require("../controllers/appointment.controller");
@@ -23,8 +25,9 @@ router.get("/", getAppointmentModuleInfo);
 router.get("/me", protect, authorize("patient", "doctor", "admin"), getMyAppointmentAccessInfo);
 
 router.get("/doctor/me", protect, authorize("doctor"), getMyDoctorAppointments);
-
 router.patch("/doctor/:appointmentId/meeting", protect, authorize("doctor"), createMeetingForDoctorAppointment);
+router.patch("/doctor/:appointmentId/cancel", protect, authorize("doctor"), cancelDoctorAppointment);
+router.patch("/doctor/:appointmentId/complete", protect, authorize("doctor"), completeDoctorAppointment);
 
 router.get("/meeting/access", protect, authorize("patient", "doctor"), getMeetingAccess);
 

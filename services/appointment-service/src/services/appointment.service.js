@@ -386,11 +386,12 @@ const getModuleInfo = async () => {
       "patient cancel appointment",
       "patient reschedule appointment",
       "doctor appointments fetch",
+      "doctor cancel appointment",
+      "doctor complete appointment",
       "doctor meeting room creation",
       "meeting access validation"
     ],
     nextPhase: [
-      "doctor status actions",
       "payment service integration",
       "payment status sync",
       "gateway and frontend integration"
@@ -745,6 +746,84 @@ const reschedulePatientAppointment = async ({
   };
 };
 
+const cancelDoctorAppointment = async ({ appointmentId, doctorId, reason }) => {
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    $or: [{ doctorUserId: doctorId }, { doctorId }]
+  });
+
+  if (!appointment) {
+    throw new AppError("Appointment not found for this doctor", 404);
+  }
+
+  if (appointment.status === "CANCELLED") {
+    throw new AppError("Appointment already cancelled", 400);
+  }
+
+  if (appointment.status === "COMPLETED") {
+    throw new AppError("Completed appointment cannot be cancelled", 400);
+  }
+
+  appointment.status = "CANCELLED";
+  appointment.cancelledBy = "DOCTOR";
+  appointment.cancellationReason = reason || "Cancelled by doctor";
+
+  appendStatusHistory(
+    appointment,
+    "CANCELLED",
+    reason || "Appointment cancelled by doctor"
+  );
+
+  await appointment.save();
+
+  return {
+    appointment
+  };
+};
+
+const completeDoctorAppointment = async ({ appointmentId, doctorId }) => {
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    $or: [{ doctorUserId: doctorId }, { doctorId }]
+  });
+
+  if (!appointment) {
+    throw new AppError("Appointment not found for this doctor", 404);
+  }
+
+  if (appointment.status === "CANCELLED") {
+    throw new AppError("Cancelled appointment cannot be completed", 400);
+  }
+
+  if (appointment.status === "COMPLETED") {
+    throw new AppError("Appointment already completed", 400);
+  }
+
+  if (
+    appointment.paymentMode === "ONLINE" &&
+    appointment.paymentStatus !== "PAID"
+  ) {
+    throw new AppError(
+      "Cannot complete appointment before payment is completed",
+      400
+    );
+  }
+
+  appointment.status = "COMPLETED";
+
+  appendStatusHistory(
+    appointment,
+    "COMPLETED",
+    "Appointment marked as completed by doctor"
+  );
+
+  await appointment.save();
+
+  return {
+    appointment
+  };
+};
+
 const createMeetingForAppointment = async ({ appointmentId, doctorUserId }) => {
   const appointment = await Appointment.findOne({
     _id: appointmentId,
@@ -835,6 +914,8 @@ module.exports = {
   getPatientAppointmentById,
   cancelPatientAppointment,
   reschedulePatientAppointment,
+  cancelDoctorAppointment,
+  completeDoctorAppointment,
   createMeetingForAppointment,
   getMeetingAccessForUser
 };
