@@ -20,7 +20,7 @@ try {
       pass: process.env.EMAIL_PASS
     }
   });
-  console.log('✅ Transporter created successfully');
+  console.log('Transporter created successfully');
 } catch (error) {
-  console.error('❌ Transporter creation failed:', error.message);
+  console.error('Transporter creation failed:', error.message);
 }
