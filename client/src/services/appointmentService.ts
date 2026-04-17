@@ -176,6 +176,18 @@ export const acceptDoctorAppointment = async (appointmentId: string) => {
   return response.data?.data;
 };
 
+export const cancelDoctorAppointment = async (appointmentId: string, reason = '') => {
+  const response = await axios.patch(
+    `${APPOINTMENT_API_BASE_URL}/doctor/${appointmentId}/cancel`,
+    { reason },
+    {
+      headers: getAuthHeaders()
+    }
+  );
+
+  return response.data?.data;
+};
+
 export const getMeetingAccess = async (roomName: string) => {
   const response = await axios.get(`${APPOINTMENT_API_BASE_URL}/meeting/access`, {
     params: { roomName },

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Calendar, Clock, Loader2, RefreshCw, Video, User, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
-import { acceptDoctorAppointment, getMeetingAccess, getMyDoctorAppointments } from '../../services/appointmentService';
+import { acceptDoctorAppointment, cancelDoctorAppointment, getMeetingAccess, getMyDoctorAppointments } from '../../services/appointmentService';
 import { createTelemedicineMeeting } from '../../services/telemedicineService';
 
 type Appointment = {
@@ -24,6 +24,7 @@ const DoctorAppointmentsPage = () => {
   const [loading, setLoading] = useState(false);
   const [creatingMeetingId, setCreatingMeetingId] = useState('');
   const [acceptingAppointmentId, setAcceptingAppointmentId] = useState('');
+  const [cancellingAppointmentId, setCancellingAppointmentId] = useState('');
   const [error, setError] = useState('');
   const [doctorName, setDoctorName] = useState('Doctor');
 
@@ -118,6 +119,20 @@ const DoctorAppointmentsPage = () => {
       openMeetingRoom(roomName);
     } catch (err: any) {
       setError(err.response?.data?.message || err.message || 'Unable to join meeting');
+    }
+  };
+
+  const handleCancelAppointment = async (appointmentId: string) => {
+    setError('');
+    setCancellingAppointmentId(appointmentId);
+
+    try {
+      await cancelDoctorAppointment(appointmentId);
+      await fetchAppointments();
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Failed to cancel appointment');
+    } finally {
+      setCancellingAppointmentId('');
     }
   };
 
@@ -338,6 +353,15 @@ const DoctorAppointmentsPage = () => {
                         Join Meeting
                       </button>
                     ) : null}
+
+                    <button
+                      className="meeting-btn"
+                      onClick={() => handleCancelAppointment(appointment._id)}
+                      disabled={cancellingAppointmentId === appointment._id}
+                      style={{ background: '#DC2626' }}
+                    >
+                      {cancellingAppointmentId === appointment._id ? 'Cancelling...' : 'Cancel'}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -397,6 +421,15 @@ const DoctorAppointmentsPage = () => {
                         : acceptingAppointmentId === appointment._id
                           ? 'Accepting...'
                           : 'Accept'}
+                    </button>
+
+                    <button
+                      className="meeting-btn"
+                      onClick={() => handleCancelAppointment(appointment._id)}
+                      disabled={cancellingAppointmentId === appointment._id}
+                      style={{ background: '#DC2626' }}
+                    >
+                      {cancellingAppointmentId === appointment._id ? 'Cancelling...' : 'Cancel'}
                     </button>
                   </div>
                 </div>
