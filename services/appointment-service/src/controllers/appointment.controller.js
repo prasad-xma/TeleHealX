@@ -2,25 +2,25 @@ const asyncHandler = require("../middlewares/asyncHandler");
 const appointmentService = require("../services/appointment.service");
 const { sendSuccess } = require("../utils/apiResponse");
 
-const getAppointmentModuleInfo = asyncHandler(async (req, res) => {
+const getAppointmentModuleInfo = asyncHandler(async (req, res, next) => {
   const result = await appointmentService.getModuleInfo();
 
   return sendSuccess(res, result, "Appointment module base route is working");
 });
 
-const getMyAppointmentAccessInfo = asyncHandler(async (req, res) => {
+const getMyAppointmentAccessInfo = asyncHandler(async (req, res, next) => {
   const result = await appointmentService.getMyAppointmentAccessInfo(req.user);
 
   return sendSuccess(res, result, "Protected appointment route is working");
 });
 
-const getMyDoctorAppointments = asyncHandler(async (req, res) => {
+const getMyDoctorAppointments = asyncHandler(async (req, res, next) => {
   const result = await appointmentService.getAppointmentsForDoctor(req.user.userId);
 
   return sendSuccess(res, result, "Doctor appointments fetched successfully");
 });
 
-const getDoctorsForPatient = asyncHandler(async (req, res) => {
+const getDoctorsForPatient = asyncHandler(async (req, res, next) => {
   const name = typeof req.query.name === "string" ? req.query.name.trim() : "";
   const specialty =
     typeof req.query.specialty === "string" ? req.query.specialty.trim() : "";
@@ -35,7 +35,7 @@ const getDoctorsForPatient = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Doctors fetched successfully");
 });
 
-const getDoctorDetailsForPatient = asyncHandler(async (req, res) => {
+const getDoctorDetailsForPatient = asyncHandler(async (req, res, next) => {
   const { doctorId } = req.params;
 
   const result = await appointmentService.getDoctorDetailsForPatient({ doctorId });
@@ -43,7 +43,7 @@ const getDoctorDetailsForPatient = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Doctor details fetched successfully");
 });
 
-const getDoctorSlotsForPatient = asyncHandler(async (req, res) => {
+const getDoctorSlotsForPatient = asyncHandler(async (req, res, next) => {
   const { doctorId } = req.params;
   const date = typeof req.query.date === "string" ? req.query.date.trim() : "";
 
@@ -55,7 +55,7 @@ const getDoctorSlotsForPatient = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Doctor slots fetched successfully");
 });
 
-const createAppointmentForPatient = asyncHandler(async (req, res) => {
+const createAppointmentForPatient = asyncHandler(async (req, res, next) => {
   console.log('[APPOINTMENT CONTROLLER] Received appointment booking request');
   console.log('[APPOINTMENT CONTROLLER] Request body:', req.body);
   console.log('[APPOINTMENT CONTROLLER] User from token:', req.user);
@@ -101,13 +101,13 @@ const createAppointmentForPatient = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, 'Appointment created successfully', 201);
 });
 
-const getMyPatientAppointments = asyncHandler(async (req, res) => {
+const getMyPatientAppointments = asyncHandler(async (req, res, next) => {
   const result = await appointmentService.getAppointmentsForPatient(req.user.userId);
 
   return sendSuccess(res, result, "Patient appointments fetched successfully");
 });
 
-const getPatientAppointmentById = asyncHandler(async (req, res) => {
+const getPatientAppointmentById = asyncHandler(async (req, res, next) => {
   const { appointmentId } = req.params;
 
   const result = await appointmentService.getPatientAppointmentById({
@@ -118,7 +118,7 @@ const getPatientAppointmentById = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Patient appointment fetched successfully");
 });
 
-const cancelPatientAppointment = asyncHandler(async (req, res) => {
+const cancelPatientAppointment = asyncHandler(async (req, res, next) => {
   const { appointmentId } = req.params;
   const reason = typeof req.body.reason === "string" ? req.body.reason.trim() : "";
 
@@ -131,7 +131,7 @@ const cancelPatientAppointment = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Appointment cancelled successfully");
 });
 
-const reschedulePatientAppointment = asyncHandler(async (req, res) => {
+const reschedulePatientAppointment = asyncHandler(async (req, res, next) => {
   const { appointmentId } = req.params;
   const { date, time } = req.body;
 
@@ -145,7 +145,7 @@ const reschedulePatientAppointment = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Appointment rescheduled successfully");
 });
 
-const cancelDoctorAppointment = asyncHandler(async (req, res) => {
+const cancelDoctorAppointment = asyncHandler(async (req, res, next) => {
   const { appointmentId } = req.params;
   const reason = typeof req.body.reason === "string" ? req.body.reason.trim() : "";
 
@@ -158,7 +158,7 @@ const cancelDoctorAppointment = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Doctor cancelled appointment successfully");
 });
 
-const acceptDoctorAppointment = asyncHandler(async (req, res) => {
+const acceptDoctorAppointment = asyncHandler(async (req, res, next) => {
   const { appointmentId } = req.params;
 
   const result = await appointmentService.acceptDoctorAppointment({
@@ -169,7 +169,7 @@ const acceptDoctorAppointment = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, 'Appointment accepted successfully');
 });
 
-const completeDoctorAppointment = asyncHandler(async (req, res) => {
+const completeDoctorAppointment = asyncHandler(async (req, res, next) => {
   const { appointmentId } = req.params;
 
   const result = await appointmentService.completeDoctorAppointment({
@@ -180,7 +180,7 @@ const completeDoctorAppointment = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Appointment marked as completed");
 });
 
-const updateAppointmentPaymentStatusInternal = asyncHandler(async (req, res) => {
+const updateAppointmentPaymentStatusInternal = asyncHandler(async (req, res, next) => {
   const { appointmentId } = req.params;
   const { paymentStatus, appointmentStatus, note, paymentReference } = req.body;
 
@@ -195,7 +195,7 @@ const updateAppointmentPaymentStatusInternal = asyncHandler(async (req, res) => 
   return sendSuccess(res, result, "Appointment payment status updated successfully");
 });
 
-const getMeetingAccess = asyncHandler(async (req, res) => {
+const getMeetingAccess = asyncHandler(async (req, res, next) => {
   const roomName = typeof req.query.roomName === "string" ? req.query.roomName.trim() : "";
 
   const result = await appointmentService.getMeetingAccessForUser({
@@ -207,7 +207,7 @@ const getMeetingAccess = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Meeting access validated successfully");
 });
 
-const createMeetingForDoctorAppointment = asyncHandler(async (req, res) => {
+const createMeetingForDoctorAppointment = asyncHandler(async (req, res, next) => {
   const { appointmentId } = req.params;
 
   if (!appointmentId) {
@@ -225,7 +225,7 @@ const createMeetingForDoctorAppointment = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Meeting created successfully");
 });
 
-const completeConsultation = asyncHandler(async (req, res) => {
+const completeConsultation = asyncHandler(async (req, res, next) => {
   const { appointmentId } = req.params;
   const { prescriptionIssued = false } = req.body;
 
