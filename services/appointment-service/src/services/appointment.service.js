@@ -31,11 +31,24 @@ const textIncludes = (value, search) => {
 };
 
 const normalizeDoctorObject = (doctor = {}) => {
+  const nestedUser =
+    doctor.userId && typeof doctor.userId === "object" ? doctor.userId : null;
+
+  const resolvedUserId =
+    nestedUser?._id ||
+    doctor.userId ||
+    doctor.user ||
+    doctor.user_id ||
+    doctor._id ||
+    doctor.id ||
+    null;
+
   const firstName = doctor.firstName || "";
   const lastName = doctor.lastName || "";
   const combinedName = `${firstName} ${lastName}`.trim();
 
   const name =
+    nestedUser?.name ||
     doctor.name ||
     doctor.fullName ||
     doctor.doctorName ||
@@ -83,10 +96,11 @@ const normalizeDoctorObject = (doctor = {}) => {
     [];
 
   return {
-    id: doctor._id || doctor.id || doctor.userId || null,
-    userId: doctor.userId || doctor._id || doctor.id || null,
+    id: resolvedUserId,
+    userId: resolvedUserId,
+    profileId: doctor._id || doctor.id || null,
     name,
-    email: doctor.email || null,
+    email: nestedUser?.email || doctor.email || null,
     phone: doctor.phone || doctor.mobile || null,
     specialty,
     experience,
@@ -121,6 +135,37 @@ const fetchDoctorsFromAuthService = async (params) => {
 
     throw new AppError(upstreamMessage, error.response?.status || 502);
   }
+};
+
+const fetchDoctorsFromDoctorService = async (params) => {
+  if (!env.doctorServiceUrl) {
+    throw new AppError("DOCTOR_SERVICE_URL is not configured", 500);
+  }
+
+  try {
+    const response = await axios.get(`${env.doctorServiceUrl}/api/doctors`, {
+      params,
+      timeout: 8000
+    });
+
+    return normalizeDoctorListFromAuthResponse(response.data).map(normalizeDoctorObject);
+  } catch (error) {
+    const upstreamMessage =
+      error.response?.data?.message ||
+      error.message ||
+      "Failed to fetch doctors from doctor-service";
+
+    throw new AppError(upstreamMessage, error.response?.status || 502);
+  }
+};
+
+const fetchDoctorByUserIdFromDoctorService = async (doctorUserId) => {
+  if (!doctorUserId) {
+    return null;
+  }
+
+  const doctors = await fetchDoctorsFromDoctorService();
+  return doctors.find((doctor) => String(doctor.userId) === String(doctorUserId)) || null;
 };
 
 const fetchDoctorByIdFromAuthService = async (doctorId) => {
@@ -418,7 +463,15 @@ const getAppointmentsForDoctor = async (doctorId) => {
 const getDoctorsForPatient = async ({ name = "", specialty = "", limit = 10 }) => {
   const safeLimit = Math.max(1, Math.min(Number(limit) || 10, 50));
 
-  const doctors = await fetchDoctorsFromAuthService(name ? { name } : undefined);
+  let doctors = [];
+  try {
+    doctors = await fetchDoctorsFromDoctorService({
+      ...(name ? { name } : {}),
+      ...(specialty ? { specialization: specialty } : {})
+    });
+  } catch (error) {
+    doctors = await fetchDoctorsFromAuthService(name ? { name } : undefined);
+  }
 
   const filteredDoctors = doctors
     .filter((doctor) => doctor.id)
@@ -448,7 +501,9 @@ const getDoctorDetailsForPatient = async ({ doctorId }) => {
     throw new AppError("doctorId is required", 400);
   }
 
-  const doctor = await fetchDoctorByIdFromAuthService(doctorId);
+  const doctor =
+    (await fetchDoctorByUserIdFromDoctorService(doctorId).catch(() => null)) ||
+    (await fetchDoctorByIdFromAuthService(doctorId));
 
   if (!doctor) {
     throw new AppError("Doctor not found", 404);
@@ -472,7 +527,9 @@ const getDoctorSlotsForPatient = async ({ doctorId, date }) => {
     throw new AppError("date must be in YYYY-MM-DD format", 400);
   }
 
-  const doctor = await fetchDoctorByIdFromAuthService(doctorId);
+  const doctor =
+    (await fetchDoctorByUserIdFromDoctorService(doctorId).catch(() => null)) ||
+    (await fetchDoctorByIdFromAuthService(doctorId));
 
   if (!doctor) {
     throw new AppError("Doctor not found", 404);
