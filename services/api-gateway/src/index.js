@@ -23,16 +23,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Service URLs from environment variables with port documentation
-const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:5001';        // Port 5001
-const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5002';        // Port 5002
-const patientServiceUrl = process.env.PATIENT_SERVICE_URL || 'http://localhost:5015';  // Port 5015
-const doctorServiceUrl = process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010';    // Port 5010
-const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:5004';            // Port 5004
-const appointmentServiceUrl = process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5007'; // Port 5007
-const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL || 'http://localhost:5006';  // Port 5006
-const telemedicineServiceUrl = process.env.TELEMEDICINE_SERVICE_URL || 'http://localhost:5005'; // Port 5005
-const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:5008'; // Port 5008
+const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:5001';
+const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5001';
+const patientServiceUrl = process.env.PATIENT_SERVICE_URL || 'http://localhost:5015';
+const doctorServiceUrl = process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010';
+const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:5004';
+const appointmentServiceUrl = process.env.APPOINTMENT_SERVICE_URL || 'http://localhost:5007';
+const paymentServiceUrl = process.env.PAYMENT_SERVICE_URL || 'http://localhost:5006';
+const telemedicineServiceUrl = process.env.TELEMEDICINE_SERVICE_URL || 'http://localhost:5005';
+const notificationServiceUrl = process.env.NOTIFICATION_SERVICE_URL || 'http://localhost:5008';
 
 const createServiceProxy = (target, prefix) =>
   createProxyMiddleware({
@@ -41,7 +40,6 @@ const createServiceProxy = (target, prefix) =>
     pathRewrite: (path) => `${prefix}${path}`,
   });
 
-// Service Routes
 app.use(
   '/api/auth',
   createServiceProxy(authServiceUrl, '/api/auth')
@@ -49,7 +47,7 @@ app.use(
 
 app.use(
   '/api/users',
-  createServiceProxy(userServiceUrl, '/api/users')
+  createServiceProxy(userServiceUrl, '/api/auth/users')
 );
 
 app.use(
@@ -92,7 +90,6 @@ app.use(
   createServiceProxy(notificationServiceUrl, '/api/notifications')
 );
 
-// Health check endpoint
 app.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',

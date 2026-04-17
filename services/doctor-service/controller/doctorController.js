@@ -52,7 +52,7 @@ const getPatientReports = async (req, res) => {
 		const { patientId } = req.params;
 		const axios = require('axios');
 
-		const patientServiceUrl = process.env.PATIENT_SERVICE_URL || 'http://patient-service:5003';
+		const patientServiceUrl = process.env.PATIENT_SERVICE_URL || 'http://patient-service:5015';
 		const internalKey = process.env.INTERNAL_API_KEY;
 
 		const response = await axios.get(
