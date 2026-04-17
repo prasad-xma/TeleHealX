@@ -7,7 +7,7 @@ const connectDatabase = async () => {
   }
 
   await mongoose.connect(env.mongoUri);
-  console.log("✅ payment-service connected to MongoDB");
+  console.log("payment-service connected to MongoDB");
 };
 
 module.exports = connectDatabase;

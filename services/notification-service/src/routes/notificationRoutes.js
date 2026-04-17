@@ -4,12 +4,12 @@ const notificationController = require('../controller/notificationController');
 
 // Add route logging middleware for notification service
 router.use((req, res, next) => {
-  console.log(`📧 [NOTIFICATION ROUTES] ${req.method} ${req.url}`);
-  console.log(`📧 [NOTIFICATION ROUTES] Headers:`, {
+  console.log(`[NOTIFICATION ROUTES] ${req.method} ${req.url}`);
+  console.log(`[NOTIFICATION ROUTES] Headers:`, {
     'x-internal-api-key': req.headers['x-internal-api-key'] ? '***' : 'None'
   });
   if (req.body && Object.keys(req.body).length > 0) {
-    console.log(`📧 [NOTIFICATION ROUTES] Body:`, req.body);
+    console.log(`[NOTIFICATION ROUTES] Body:`, req.body);
   }
   next();
 });

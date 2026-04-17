@@ -7,7 +7,7 @@ const connectDatabase = async () => {
   }
 
   await mongoose.connect(env.mongoUri);
-  console.log("✅ appointment-service connected to MongoDB");
+  console.log("appointment-service connected to MongoDB");
 };
 
 module.exports = connectDatabase;

@@ -7,8 +7,8 @@ const startServer = async () => {
     await connectDatabase();
 
     const server = app.listen(env.port, () => {
-      console.log(`✅ ${env.serviceName} running on port ${env.port}`);
-      console.log(`✅ Environment: ${env.nodeEnv}`);
+      console.log(`${env.serviceName} running on port ${env.port}`);
+      console.log(`Environment: ${env.nodeEnv}`);
     });
 
     process.on("unhandledRejection", (error) => {
