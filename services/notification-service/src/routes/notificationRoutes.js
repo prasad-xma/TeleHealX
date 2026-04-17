@@ -23,6 +23,9 @@ router.post('/appointment-booked', notificationController.sendAppointmentBooking
 // POST /api/notifications/appointment-accepted - Send appointment accepted notifications
 router.post('/appointment-accepted', notificationController.sendAppointmentAcceptedNotifications);
 
+// POST /api/notifications/appointment-cancelled - Send appointment cancelled notifications
+router.post('/appointment-cancelled', notificationController.sendAppointmentCancelledNotifications);
+
 // POST /api/notifications/consultation-completed - Send consultation completion notifications
 router.post('/consultation-completed', notificationController.sendConsultationCompletedNotifications);
 
