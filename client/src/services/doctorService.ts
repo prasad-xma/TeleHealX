@@ -145,6 +145,28 @@ export const getPatientPrescriptions = async (patientId: string) => {
   }
 };
 
+export const deletePrescription = async (id: string) => {
+  try {
+    const response = await axios.delete(`${API_BASE_URL}/prescriptions/${id}`, {
+      headers: authHeader()
+    });
+    return response;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
+export const updatePrescription = async (id: string, data: object) => {
+  try {
+    const response = await axios.put(`${API_BASE_URL}/prescriptions/${id}`, data, {
+      headers: authHeader()
+    });
+    return response;
+  } catch (error: any) {
+    throw error;
+  }
+};
+
 export const getPatientReports = async (patientId: string) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/doctors/me/patients/${patientId}/reports`, {

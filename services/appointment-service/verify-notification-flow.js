@@ -19,7 +19,7 @@ const config = {
   internalServiceSecret: process.env.INTERNAL_SERVICE_SECRET || 'internal-key'
 };
 
-console.log('🔍 Appointment-Notification Flow Verification\n');
+console.log('Appointment-Notification Flow Verification\n');
 console.log('Configuration:');
 console.log(`  Auth Service: ${config.authServiceUrl}`);
 console.log(`  Notification Service: ${config.notificationServiceUrl}`);
@@ -31,12 +31,12 @@ let testsFailed = 0;
 
 const test = async (name, fn) => {
   try {
-    console.log(`⏳ Testing: ${name}...`);
+    console.log(`Testing: ${name}...`);
     await fn();
-    console.log(`✅ PASSED: ${name}\n`);
+    console.log(`PASSED: ${name}\n`);
     testsPassed++;
   } catch (error) {
-    console.error(`❌ FAILED: ${name}`);
+    console.error(`FAILED: ${name}`);
     console.error(`   Error: ${error.message}\n`);
     testsFailed++;
   }
@@ -66,7 +66,7 @@ const runTests = async () => {
     });
     const doctors = Array.isArray(response.data) ? response.data : response.data.data || [];
     if (doctors.length === 0) {
-      console.log('⚠️  Warning: No doctors found in the system');
+      console.log('Warning: No doctors found in the system');
     }
     console.log(`   Found ${doctors.length} doctors`);
   });
@@ -82,7 +82,7 @@ const runTests = async () => {
   // Test 5: Verify appointment service has internal secret
   await test('Appointment Service: INTERNAL_SERVICE_SECRET configured', async () => {
     if (!config.internalServiceSecret || config.internalServiceSecret === 'internal-key') {
-      console.log('⚠️  Warning: Using default INTERNAL_SERVICE_SECRET. Should be configured in .env');
+      console.log('Warning: Using default INTERNAL_SERVICE_SECRET. Should be configured in .env');
     }
     console.log(`   Secret length: ${config.internalServiceSecret.length} characters`);
   });
@@ -116,7 +116,7 @@ const runTests = async () => {
   console.log('='.repeat(50));
 
   if (testsFailed === 0) {
-    console.log('\n✅ All verification tests passed!');
+    console.log('\nAll verification tests passed!');
     console.log('\nNext steps:');
     console.log('1. Ensure all services are running:');
     console.log('   - npm run dev (in appointment-service)');
@@ -126,7 +126,7 @@ const runTests = async () => {
     console.log('\n2. Create an appointment via the API');
     console.log('3. Check if email and SMS are received');
   } else {
-    console.log('\n❌ Some tests failed. Please fix the issues above.');
+    console.log('\nSome tests failed. Please fix the issues above.');
     process.exit(1);
   }
 };

@@ -9,5 +9,7 @@ router.get('/doctor/me', protect, verifyDoctor, prescriptionController.getDoctor
 router.get('/:id', protect, prescriptionController.getPrescriptionById);
 router.get('/patient/:patientId', protect, prescriptionController.getPatientPrescriptions);
 router.patch('/:id/status', protect, verifyDoctor, prescriptionController.updatePrescriptionStatus);
+router.delete('/:id', protect, verifyDoctor, prescriptionController.deletePrescription);
+router.put('/:id', protect, verifyDoctor, prescriptionController.updatePrescription);
 
 module.exports = router;

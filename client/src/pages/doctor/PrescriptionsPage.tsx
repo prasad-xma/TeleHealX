@@ -1,19 +1,37 @@
 import { useState, useEffect } from 'react';
-import { getMyPrescriptions, getPrescriptionById, issuePrescription } from '../../services/doctorService';
-import { FileText, Plus, Search, Calendar, User, Pill, Trash2, X, Loader2, CheckCircle, Clock, AlertCircle, Filter } from 'lucide-react';
+import { getMyPrescriptions, getPrescriptionById, issuePrescription, deletePrescription, updatePrescription } from '../../services/doctorService';
+import { getMyDoctorAppointments } from '../../services/appointmentService';
+import { FileText, Plus, Search, Calendar, User, Pill, Trash2, X, Loader2, CheckCircle, Clock, AlertCircle, Filter, Edit } from 'lucide-react';
 
 interface Medication {
   id: string;
   name: string;
   dosage: string;
   frequency: string;
-  duration: string;
+  startDate: string;
+  endDate: string;
   instructions: string;
+}
+
+interface Appointment {
+  _id: string;
+  patientId: string;
+  patientName: string;
+  date: string;
+  time: string;
+  type: string;
+  status: string;
+}
+
+interface PopulatedUser {
+  _id: string;
+  name: string;
+  email: string;
 }
 
 interface Prescription {
   _id: string;
-  patientId: string;
+  patientId: string | PopulatedUser;
   patientName?: string;
   appointmentId?: string;
   diagnosis: string;
@@ -26,17 +44,23 @@ interface Prescription {
 const PrescriptionsPage = () => {
   const [activeTab, setActiveTab] = useState<'my' | 'issue'>('my');
   const [prescriptions, setPrescriptions] = useState<Prescription[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [selectedPrescription, setSelectedPrescription] = useState<Prescription | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [appointmentsLoading, setAppointmentsLoading] = useState(false);
 
   // Search/filter state
   const [searchTerm, setSearchTerm] = useState('');
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo, setDateTo] = useState('');
+
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState<{ show: boolean; prescriptionId: string | null }>({ show: false, prescriptionId: null });
+  const [deleting, setDeleting] = useState(false);
 
   // Issue prescription form state
   const [issueForm, setIssueForm] = useState({
@@ -46,10 +70,34 @@ const PrescriptionsPage = () => {
     notes: '',
   });
   const [medications, setMedications] = useState<Medication[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingPrescriptionId, setEditingPrescriptionId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchPrescriptions();
   }, []);
+
+  useEffect(() => {
+    if (activeTab === 'issue') {
+      fetchAppointments();
+    } else {
+      // Reset form when switching away from issue tab
+      resetForm();
+    }
+  }, [activeTab]);
+
+  const fetchAppointments = async () => {
+    try {
+      setAppointmentsLoading(true);
+      const response = await getMyDoctorAppointments();
+      setAppointments(response.appointments || []);
+    } catch (err: any) {
+      console.error('Error fetching appointments:', err);
+      setError(err.response?.data?.message || 'Failed to load appointments');
+    } finally {
+      setAppointmentsLoading(false);
+    }
+  };
 
   const fetchPrescriptions = async () => {
     try {
@@ -75,9 +123,128 @@ const PrescriptionsPage = () => {
     }
   };
 
-  const handleIssueInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleIssueInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setIssueForm(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePatientSelect = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedAppointmentId = e.target.value;
+    const selectedAppointment = appointments.find(app => app._id === selectedAppointmentId);
+    
+    if (selectedAppointment) {
+      console.log('Selected appointment:', selectedAppointment);
+      setIssueForm(prev => ({
+        ...prev,
+        patientId: selectedAppointment.patientId,
+        appointmentId: selectedAppointment._id
+      }));
+    }
+  };
+
+  const getUniquePatientsFromAppointments = () => {
+    const patientMap = new Map<string, Appointment>();
+    appointments.forEach(appointment => {
+      if (!patientMap.has(appointment.patientId)) {
+        patientMap.set(appointment.patientId, appointment);
+      }
+    });
+    return Array.from(patientMap.values());
+  };
+
+  const getPatientIdString = (patientId: string | PopulatedUser): string => {
+    return typeof patientId === 'string' ? patientId : patientId._id;
+  };
+
+  const getPatientName = (presc: Prescription): string => {
+    if (presc.patientName) return presc.patientName;
+    if (typeof presc.patientId === 'object') return presc.patientId.name;
+    return 'Unknown Patient';
+  };
+
+  const handleDeleteClick = (prescriptionId: string) => {
+    setDeleteConfirm({ show: true, prescriptionId });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm.prescriptionId) return;
+    
+    setDeleting(true);
+    try {
+      await deletePrescription(deleteConfirm.prescriptionId);
+      setSuccess('Prescription deleted successfully');
+      fetchPrescriptions();
+      setDeleteConfirm({ show: false, prescriptionId: null });
+      setTimeout(() => setSuccess(''), 2000);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to delete prescription');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleEditClick = (presc: Prescription) => {
+    // Populate the form with the prescription data
+    setActiveTab('issue');
+    setIsEditing(true);
+    setEditingPrescriptionId(presc._id);
+    setIssueForm({
+      patientId: typeof presc.patientId === 'string' ? presc.patientId : presc.patientId._id,
+      appointmentId: presc.appointmentId || '',
+      diagnosis: presc.diagnosis,
+      notes: presc.notes || '',
+    });
+    
+    console.log('Original medications:', presc.medications);
+    
+    const formattedMedications = presc.medications.map(med => ({
+      id: Date.now().toString() + Math.random(),
+      name: med.name || '',
+      dosage: med.dosage || '',
+      frequency: med.frequency || '',
+      startDate: formatDateForInput(med.startDate),
+      endDate: formatDateForInput(med.endDate),
+      instructions: med.instructions || '',
+    }));
+    
+    console.log('Formatted medications:', formattedMedications);
+    setMedications(formattedMedications);
+  };
+
+  const resetForm = () => {
+    setIsEditing(false);
+    setEditingPrescriptionId(null);
+    setIssueForm({
+      patientId: '',
+      appointmentId: '',
+      diagnosis: '',
+      notes: '',
+    });
+    setMedications([]);
+  };
+
+  const formatDateForInput = (dateString: string): string => {
+    if (!dateString) return '';
+    
+    // If it's already in YYYY-MM-DD format, return it directly
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return dateString;
+    }
+    
+    // Try to extract YYYY-MM-DD from ISO format strings (e.g., 2025-10-16T00:00:00.000Z)
+    const isoMatch = dateString.match(/(\d{4}-\d{2}-\d{2})/);
+    if (isoMatch) {
+      return isoMatch[1];
+    }
+    
+    // Try parsing with Date constructor as fallback
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const addMedication = () => {
@@ -88,7 +255,8 @@ const PrescriptionsPage = () => {
         name: '',
         dosage: '',
         frequency: '',
-        duration: '',
+        startDate: '',
+        endDate: '',
         instructions: '',
       },
     ]);
@@ -114,36 +282,47 @@ const PrescriptionsPage = () => {
       return;
     }
 
-    const invalidMed = medications.find(med => !med.name || !med.dosage);
+    const invalidMed = medications.find(med => !med.name || !med.dosage || !med.frequency || !med.startDate || !med.endDate);
     if (invalidMed) {
-      setError('Please fill in medication name and dosage');
+      setError('Please fill in medication name, dosage, frequency, start date, and valid until');
       return;
     }
 
     setSubmitting(true);
     try {
-      await issuePrescription({
+      const prescriptionData = {
         ...issueForm,
         medications,
-      });
-      setSuccess('Prescription issued successfully!');
+      };
+      console.log('Sending prescription data:', prescriptionData);
+      
+      if (isEditing && editingPrescriptionId) {
+        await updatePrescription(editingPrescriptionId, prescriptionData);
+        setSuccess('Prescription updated successfully!');
+      } else {
+        await issuePrescription(prescriptionData);
+        setSuccess('Prescription issued successfully!');
+      }
+      
       setTimeout(() => {
         setSuccess('');
         setActiveTab('my');
-        setIssueForm({ patientId: '', appointmentId: '', diagnosis: '', notes: '' });
-        setMedications([]);
+        resetForm();
         fetchPrescriptions();
       }, 1500);
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to issue prescription');
+      console.error('Error issuing prescription:', err);
+      console.error('Error response:', err.response?.data);
+      setError(err.response?.data?.message || 'Failed to save prescription');
     } finally {
       setSubmitting(false);
     }
   };
 
   const filteredPrescriptions = prescriptions.filter(presc => {
+    const patientIdStr = typeof presc.patientId === 'string' ? presc.patientId : presc.patientId._id;
     const matchesSearch = searchTerm === '' || 
-      presc.patientId.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      patientIdStr.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (presc.patientName && presc.patientName.toLowerCase().includes(searchTerm.toLowerCase()));
     
     const matchesDateFrom = !dateFrom || new Date(presc.issuedDate) >= new Date(dateFrom);
@@ -283,9 +462,33 @@ const PrescriptionsPage = () => {
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-2">
                         <User size={18} className="text-blue-500" />
-                        <span className="font-semibold text-gray-800 text-sm">{presc.patientId}</span>
+                        <span className="font-semibold text-gray-800 text-sm">
+                          {getPatientName(presc)}
+                        </span>
                       </div>
-                      {getStatusBadge(presc.status)}
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(presc.status)}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditClick(presc);
+                          }}
+                          className="p-1.5 hover:bg-blue-100 rounded-lg transition-colors"
+                          title="Edit"
+                        >
+                          <Edit size={16} className="text-blue-600" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteClick(presc._id);
+                          }}
+                          className="p-1.5 hover:bg-red-100 rounded-lg transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 size={16} className="text-red-600" />
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -294,7 +497,20 @@ const PrescriptionsPage = () => {
                       </div>
                       <div className="flex items-center gap-2 text-sm text-gray-500">
                         <Calendar size={16} className="text-gray-400" />
-                        <span>{new Date(presc.issuedDate).toLocaleDateString()}</span>
+                        <span>
+                          {(() => {
+                            // Try to use first medication's start date
+                            if (presc.medications?.[0]?.startDate) {
+                              const date = new Date(presc.medications[0].startDate);
+                              return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
+                            }
+                            // Fall back to issuedDate
+                            const formatted = formatDateForInput(presc.issuedDate);
+                            if (formatted) return new Date(formatted).toLocaleDateString();
+                            const date = new Date(presc.issuedDate);
+                            return isNaN(date.getTime()) ? 'N/A' : date.toLocaleDateString();
+                          })()}
+                        </span>
                       </div>
                       <div className="text-xs text-gray-400 mt-2">
                         {presc.medications.length} medication{presc.medications.length !== 1 ? 's' : ''}
@@ -310,31 +526,65 @@ const PrescriptionsPage = () => {
         {/* Tab 2: Issue Prescription */}
         {activeTab === 'issue' && (
           <div className="bg-white rounded-3xl shadow-xl border border-blue-200 overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 text-white flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FileText size={24} />
+                <h2 className="text-xl font-bold font-['Fredoka_One',cursive]">
+                  {isEditing ? 'Edit Prescription' : 'Issue Prescription'}
+                </h2>
+              </div>
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="px-4 py-2 bg-white/20 hover:bg-white/30 rounded-xl transition-colors text-sm font-semibold"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
             <div className="p-6">
               <form onSubmit={handleIssueSubmit} className="space-y-6">
                 {/* Patient Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-semibold mb-1.5 text-gray-700">Patient ID</label>
-                    <input
-                      type="text"
-                      name="patientId"
-                      value={issueForm.patientId}
-                      onChange={handleIssueInputChange}
-                      required
-                      placeholder="Enter patient ID"
-                      className="w-full py-3 px-4 border-2 border-blue-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-                    />
+                    <label className="block text-sm font-semibold mb-1.5 text-gray-700">Select Patient (from Appointments)</label>
+                    {appointmentsLoading ? (
+                      <div className="flex items-center gap-2 py-3 px-4 border-2 border-blue-200 rounded-xl">
+                        <Loader2 size={18} className="animate-spin text-blue-600" />
+                        <span className="text-sm text-gray-500">Loading patients...</span>
+                      </div>
+                    ) : getUniquePatientsFromAppointments().length === 0 ? (
+                      <div className="py-3 px-4 border-2 border-blue-200 rounded-xl text-sm text-gray-500">
+                        No appointments found
+                      </div>
+                    ) : (
+                      <select
+                        name="patientId"
+                        value={issueForm.appointmentId}
+                        onChange={handlePatientSelect}
+                        required
+                        className="w-full py-3 px-4 border-2 border-blue-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 bg-white"
+                      >
+                        <option value="">Select a patient...</option>
+                        {getUniquePatientsFromAppointments().map((appointment) => (
+                          <option key={appointment._id} value={appointment._id}>
+                            {appointment.patientName} {appointment.patientId ? `(${appointment.patientId})` : ''}
+                          </option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                   <div>
-                    <label className="block text-sm font-semibold mb-1.5 text-gray-700">Appointment ID (Optional)</label>
+                    <label className="block text-sm font-semibold mb-1.5 text-gray-700">Appointment ID</label>
                     <input
                       type="text"
                       name="appointmentId"
                       value={issueForm.appointmentId}
                       onChange={handleIssueInputChange}
-                      placeholder="Enter appointment ID"
-                      className="w-full py-3 px-4 border-2 border-blue-200 rounded-xl text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                      placeholder="Auto-filled from patient selection"
+                      readOnly
+                      className="w-full py-3 px-4 border-2 border-blue-200 rounded-xl text-sm bg-gray-50 text-gray-600 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                     />
                   </div>
                 </div>
@@ -420,7 +670,7 @@ const PrescriptionsPage = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium mb-1 text-gray-600">Frequency</label>
+                              <label className="block text-xs font-medium mb-1 text-gray-600">Frequency *</label>
                               <input
                                 type="text"
                                 value={med.frequency}
@@ -430,12 +680,20 @@ const PrescriptionsPage = () => {
                               />
                             </div>
                             <div>
-                              <label className="block text-xs font-medium mb-1 text-gray-600">Duration</label>
+                              <label className="block text-xs font-medium mb-1 text-gray-600">Start Date *</label>
                               <input
-                                type="text"
-                                value={med.duration}
-                                onChange={(e) => updateMedication(med.id, 'duration', e.target.value)}
-                                placeholder="e.g., 7 days"
+                                type="date"
+                                value={med.startDate}
+                                onChange={(e) => updateMedication(med.id, 'startDate', e.target.value)}
+                                className="w-full py-2 px-3 border border-blue-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-medium mb-1 text-gray-600">Valid Until *</label>
+                              <input
+                                type="date"
+                                value={med.endDate}
+                                onChange={(e) => updateMedication(med.id, 'endDate', e.target.value)}
                                 className="w-full py-2 px-3 border border-blue-200 rounded-lg text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
                               />
                             </div>
@@ -501,7 +759,7 @@ const PrescriptionsPage = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-blue-50 rounded-xl p-4">
                       <p className="text-xs text-gray-500 font-medium mb-1">Patient ID</p>
-                      <p className="font-semibold text-gray-800">{selectedPrescription.patientId}</p>
+                      <p className="font-semibold text-gray-800">{getPatientIdString(selectedPrescription.patientId)}</p>
                     </div>
                     <div className="bg-blue-50 rounded-xl p-4">
                       <p className="text-xs text-gray-500 font-medium mb-1">Status</p>
@@ -530,7 +788,11 @@ const PrescriptionsPage = () => {
 
                   <div className="bg-blue-50 rounded-xl p-4">
                     <p className="text-xs text-gray-500 font-medium mb-1">Issued Date</p>
-                    <p className="font-semibold text-gray-800">{new Date(selectedPrescription.issuedDate).toLocaleString()}</p>
+                    <p className="font-semibold text-gray-800">
+                      {selectedPrescription.medications?.[0]?.startDate 
+                        ? new Date(selectedPrescription.medications[0].startDate).toLocaleDateString() 
+                        : 'N/A'}
+                    </p>
                   </div>
 
                   {selectedPrescription.notes && (
@@ -552,7 +814,8 @@ const PrescriptionsPage = () => {
                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Name</th>
                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Dosage</th>
                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Frequency</th>
-                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Duration</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Start Date</th>
+                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Valid Until</th>
                             <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700">Instructions</th>
                           </tr>
                         </thead>
@@ -562,7 +825,8 @@ const PrescriptionsPage = () => {
                               <td className="px-4 py-3 text-sm text-gray-800 font-medium">{med.name}</td>
                               <td className="px-4 py-3 text-sm text-gray-600">{med.dosage}</td>
                               <td className="px-4 py-3 text-sm text-gray-600">{med.frequency}</td>
-                              <td className="px-4 py-3 text-sm text-gray-600">{med.duration}</td>
+                              <td className="px-4 py-3 text-sm text-gray-600">{med.startDate}</td>
+                              <td className="px-4 py-3 text-sm text-gray-600">{med.endDate}</td>
                               <td className="px-4 py-3 text-sm text-gray-600">{med.instructions}</td>
                             </tr>
                           ))}
@@ -571,6 +835,44 @@ const PrescriptionsPage = () => {
                     </div>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Dialog */}
+        {deleteConfirm.show && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <AlertCircle size={24} className="text-red-600" />
+                <h2 className="text-xl font-bold text-gray-800">Delete Prescription</h2>
+              </div>
+              <p className="text-gray-600 mb-6">
+                Are you sure you want to delete this prescription? This action cannot be undone.
+              </p>
+              <div className="flex gap-3 justify-end">
+                <button
+                  onClick={() => setDeleteConfirm({ show: false, prescriptionId: null })}
+                  disabled={deleting}
+                  className="px-4 py-2 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={deleting}
+                  className="px-4 py-2 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {deleting ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Deleting...
+                    </>
+                  ) : (
+                    'Delete'
+                  )}
+                </button>
               </div>
             </div>
           </div>

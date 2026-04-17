@@ -25,19 +25,19 @@ const env = {
 };
 
 if (!env.mongoUri) {
-  console.warn("⚠️ MONGODB_URI is not configured for appointment-service");
+  console.warn("MONGODB_URI is not configured for appointment-service");
 }
 
 if (!env.jwtSecret) {
-  console.warn("⚠️ JWT_SECRET is not configured for appointment-service");
+  console.warn("JWT_SECRET is not configured for appointment-service");
 }
 
 if (!env.authServiceUrl) {
-  console.warn("⚠️ AUTH_SERVICE_URL is not configured for appointment-service");
+  console.warn("AUTH_SERVICE_URL is not configured for appointment-service");
 }
 
 if (!env.internalServiceSecret) {
-  console.warn("⚠️ INTERNAL_SERVICE_SECRET is not configured for appointment-service");
+  console.warn("INTERNAL_SERVICE_SECRET is not configured for appointment-service");
 }
 
 module.exports = env;
