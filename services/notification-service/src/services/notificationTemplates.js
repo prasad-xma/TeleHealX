@@ -61,6 +61,60 @@ class NotificationTemplates {
     return { email: emailTemplate, sms: smsTemplate };
   }
 
+  static getAppointmentAcceptedTemplate(data) {
+    const emailTemplate = {
+      subject: 'Appointment Accepted - TeleHealX',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: #10B981; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="margin: 0;">Appointment Accepted</h1>
+          </div>
+          <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px;">
+            <p>Dear ${data.patientName},</p>
+            <p>Your appointment has been accepted by Dr. ${data.doctorName}.</p>
+
+            <div style="background: white; padding: 15px; border-left: 4px solid #10B981; margin: 20px 0;">
+              <h3 style="margin: 0 0 10px 0; color: #333;">Appointment Details</h3>
+              <p><strong>Doctor:</strong> Dr. ${data.doctorName}</p>
+              <p><strong>Specialization:</strong> ${data.specialization}</p>
+              <p><strong>Date:</strong> ${data.date}</p>
+              <p><strong>Time:</strong> ${data.time}</p>
+              <p><strong>Appointment ID:</strong> ${data.appointmentId}</p>
+            </div>
+
+            <p>Please wait for the doctor to create or share the meeting room if it is not available yet.</p>
+
+            <hr style="border: none; border-top: 1px solid #ddd; margin: 30px 0;">
+            <p style="color: #666; font-size: 12px; text-align: center;">
+              This is an automated message from TeleHealX. Please do not reply to this email.
+            </p>
+          </div>
+        </div>
+      `,
+      text: `
+        Appointment Accepted - TeleHealX
+
+        Dear ${data.patientName},
+
+        Your appointment has been accepted by Dr. ${data.doctorName}.
+
+        Doctor: Dr. ${data.doctorName}
+        Specialization: ${data.specialization}
+        Date: ${data.date}
+        Time: ${data.time}
+        Appointment ID: ${data.appointmentId}
+
+        Please wait for the doctor to create or share the meeting room if it is not available yet.
+
+        This is an automated message from TeleHealX.
+      `
+    };
+
+    const smsTemplate = `TeleHealX: Appointment accepted by Dr. ${data.doctorName} (${data.specialization}) on ${data.date} at ${data.time}. ID: ${data.appointmentId}.`;
+
+    return { email: emailTemplate, sms: smsTemplate };
+  }
+
   static getConsultationCompletedTemplate(data) {
     const emailTemplate = {
       subject: 'Consultation Completed - TeleHealX',

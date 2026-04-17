@@ -313,16 +313,16 @@ const extractSlotsFromDoctorAvailability = (availability, date) => {
 const buildInitialStatusData = ({ paymentMode }) => {
   if (paymentMode === "ONLINE") {
     return {
-      status: "PENDING_PAYMENT",
-      paymentStatus: "PENDING",
-      historyNote: "Appointment created and waiting for online payment"
+      status: "PENDING",
+      paymentStatus: "PAID",
+      historyNote: "Appointment created with online mode and marked paid"
     };
   }
 
   return {
-    status: "CONFIRMED",
+    status: "PENDING",
     paymentStatus: "UNPAID",
-    historyNote: "Appointment created with manual payment"
+    historyNote: "Appointment created and waiting for doctor approval"
   };
 };
 
@@ -687,6 +687,60 @@ const createAppointmentForPatient = async ({
   return created;
 };
 
+const sendAppointmentAcceptedNotifications = async (appointment) => {
+  try {
+    if (!env.notificationServiceUrl) {
+      console.warn('[APPOINTMENT SERVICE] NOTIFICATION_SERVICE_URL is not configured. Skipping acceptance notifications.');
+      return;
+    }
+
+    const patientResponse = await axios.get(`${env.authServiceUrl}/api/auth/users/${appointment.patientId}`, {
+      timeout: 5000,
+      headers: {
+        'x-internal-api-key': env.internalServiceSecret || 'internal-key'
+      }
+    });
+    const patientData = patientResponse.data;
+
+    const doctorResponse = await axios.get(`${env.authServiceUrl}/api/auth/doctors/${appointment.doctorUserId || appointment.doctorId}`, {
+      timeout: 5000,
+      headers: {
+        'x-internal-api-key': env.internalServiceSecret || 'internal-key'
+      }
+    });
+    const doctorData = doctorResponse.data;
+
+    await axios.post(`${env.notificationServiceUrl}/api/notifications/appointment-accepted`, {
+      appointmentData: {
+        _id: appointment._id,
+        date: appointment.date,
+        time: appointment.time,
+        type: appointment.type,
+        notes: appointment.notes,
+        consultationLink: appointment.consultationLink
+      },
+      patientData: {
+        name: patientData.name,
+        email: patientData.email,
+        phone: patientData.phone
+      },
+      doctorData: {
+        name: doctorData.name,
+        email: doctorData.email,
+        phone: doctorData.phone,
+        specialization: doctorData.specialization
+      }
+    }, {
+      timeout: 10000,
+      headers: {
+        'x-internal-api-key': env.internalServiceSecret || 'internal-key'
+      }
+    });
+  } catch (notificationError) {
+    console.error('[APPOINTMENT SERVICE] Failed to send appointment accepted notifications:', notificationError.message);
+  }
+};
+
 const getAppointmentsForPatient = async (patientId) => {
   const appointments = await Appointment.find({ patientId })
     .sort({ createdAt: -1 })
@@ -842,6 +896,50 @@ const cancelDoctorAppointment = async ({ appointmentId, doctorId, reason }) => {
   );
 
   await appointment.save();
+
+  return {
+    appointment
+  };
+};
+
+const acceptDoctorAppointment = async ({ appointmentId, doctorId }) => {
+  const appointment = await Appointment.findOne({
+    _id: appointmentId,
+    $or: [{ doctorUserId: doctorId }, { doctorId }]
+  });
+
+  if (!appointment) {
+    throw new AppError("Appointment not found for this doctor", 404);
+  }
+
+  if (appointment.status === "CANCELLED") {
+    throw new AppError("Cancelled appointment cannot be accepted", 400);
+  }
+
+  if (appointment.status === "COMPLETED") {
+    throw new AppError("Completed appointment cannot be accepted", 400);
+  }
+
+  if (appointment.status === "CONFIRMED") {
+    return {
+      appointment
+    };
+  }
+
+  if (appointment.status !== "PENDING") {
+    throw new AppError("Appointment cannot be accepted in the current state", 400);
+  }
+
+  appointment.status = "CONFIRMED";
+  appendStatusHistory(
+    appointment,
+    "CONFIRMED",
+    "Appointment accepted by doctor"
+  );
+
+  await appointment.save();
+
+  await sendAppointmentAcceptedNotifications(appointment.toObject());
 
   return {
     appointment
@@ -1101,6 +1199,7 @@ module.exports = {
   cancelPatientAppointment,
   reschedulePatientAppointment,
   cancelDoctorAppointment,
+  acceptDoctorAppointment,
   completeDoctorAppointment,
   updateAppointmentPaymentStatusInternal,
   createMeetingForAppointment,

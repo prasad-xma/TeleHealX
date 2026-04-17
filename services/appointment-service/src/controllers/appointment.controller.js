@@ -158,6 +158,17 @@ const cancelDoctorAppointment = asyncHandler(async (req, res) => {
   return sendSuccess(res, result, "Doctor cancelled appointment successfully");
 });
 
+const acceptDoctorAppointment = asyncHandler(async (req, res) => {
+  const { appointmentId } = req.params;
+
+  const result = await appointmentService.acceptDoctorAppointment({
+    appointmentId,
+    doctorId: req.user.userId
+  });
+
+  return sendSuccess(res, result, 'Appointment accepted successfully');
+});
+
 const completeDoctorAppointment = asyncHandler(async (req, res) => {
   const { appointmentId } = req.params;
 
@@ -247,6 +258,7 @@ module.exports = {
   cancelPatientAppointment,
   reschedulePatientAppointment,
   cancelDoctorAppointment,
+  acceptDoctorAppointment,
   completeDoctorAppointment,
   updateAppointmentPaymentStatusInternal,
   createMeetingForDoctorAppointment,

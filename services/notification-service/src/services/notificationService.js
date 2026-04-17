@@ -114,6 +114,74 @@ class NotificationService {
     }
   }
 
+  async sendAppointmentAcceptedNotifications(appointmentData, patientData, doctorData) {
+    console.log('[NOTIFICATION SERVICE] Starting appointment accepted notifications');
+
+    try {
+      const notifications = [];
+
+      const acceptedNotificationData = {
+        patientName: patientData.name,
+        doctorName: doctorData.name,
+        specialization: doctorData.specialization,
+        date: appointmentData.date,
+        time: appointmentData.time,
+        appointmentId: appointmentData._id
+      };
+
+      const patientPhone = String(patientData.phone || '').trim();
+
+      if (patientData.email) {
+        const template = notificationTemplates.getAppointmentAcceptedTemplate(acceptedNotificationData);
+        const patientEmailResult = await this.emailService.sendEmail(
+          patientData.email,
+          template.email.subject,
+          template.email.html,
+          template.email.text
+        );
+
+        notifications.push({
+          type: 'email',
+          recipient: 'patient',
+          recipientEmail: patientData.email,
+          success: patientEmailResult.success,
+          error: patientEmailResult.error
+        });
+      }
+
+      if (patientPhone) {
+        const template = notificationTemplates.getAppointmentAcceptedTemplate(acceptedNotificationData);
+        const patientSmsResult = await this.smsService.sendSMS(patientPhone, template.sms);
+
+        notifications.push({
+          type: 'sms',
+          recipient: 'patient',
+          recipientPhone: patientPhone,
+          success: patientSmsResult.success,
+          error: patientSmsResult.error
+        });
+      }
+
+      logger.info('Appointment accepted notifications sent', {
+        appointmentId: appointmentData._id,
+        notifications: notifications.length
+      });
+
+      return {
+        success: true,
+        notifications,
+        appointmentId: appointmentData._id
+      };
+    } catch (error) {
+      logger.error('Failed to send appointment accepted notifications:', error);
+      return {
+        success: false,
+        error: error.message,
+        appointmentId: appointmentData._id
+      };
+    }
+  }
+
   // Send consultation completion notifications to both patient and doctor
   async sendConsultationCompletedNotifications(appointmentData, patientData, doctorData, prescriptionIssued = false) {
     try {
