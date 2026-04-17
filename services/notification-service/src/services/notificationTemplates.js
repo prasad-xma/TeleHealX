@@ -9,12 +9,13 @@ class NotificationTemplates {
             <h1 style="margin: 0;">Appointment Confirmed</h1>
           </div>
           <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px;">
-            <p>Dear ${data.patientName},</p>
+           
             <p>Your appointment has been successfully booked with the following details:</p>
             
             <div style="background: white; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0;">
               <h3 style="margin: 0 0 10px 0; color: #333;">Appointment Details</h3>
               <p><strong>Doctor:</strong> Dr. ${data.doctorName}</p>
+              <p><strong>Patient:</strong> ${data.patientName}</p>
               <p><strong>Specialization:</strong> ${data.specialization}</p>
               <p><strong>Date:</strong> ${data.date}</p>
               <p><strong>Time:</strong> ${data.time}</p>
@@ -38,7 +39,7 @@ class NotificationTemplates {
       text: `
         Appointment Confirmed - TeleHealX
         
-        Dear ${data.patientName},
+        
         
         Your appointment has been successfully booked with the following details:
         
@@ -47,6 +48,7 @@ class NotificationTemplates {
         Date: ${data.date}
         Time: ${data.time}
         Appointment ID: ${data.appointmentId}
+        Patient: ${data.patientName}
         
         Please join the video consultation 5 minutes before the scheduled time.
         
@@ -70,7 +72,7 @@ class NotificationTemplates {
             <h1 style="margin: 0;">Appointment Accepted</h1>
           </div>
           <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px;">
-            <p>Dear ${data.patientName},</p>
+            
             <p>Your appointment has been accepted by Dr. ${data.doctorName}.</p>
 
             <div style="background: white; padding: 15px; border-left: 4px solid #10B981; margin: 20px 0;">
@@ -94,7 +96,7 @@ class NotificationTemplates {
       text: `
         Appointment Accepted - TeleHealX
 
-        Dear ${data.patientName},
+       
 
         Your appointment has been accepted by Dr. ${data.doctorName}.
 
@@ -124,7 +126,7 @@ class NotificationTemplates {
             <h1 style="margin: 0;">Consultation Completed</h1>
           </div>
           <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px;">
-            <p>Dear ${data.patientName},</p>
+           
             <p>Your consultation with Dr. ${data.doctorName} has been completed successfully.</p>
             
             <div style="background: white; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0;">
@@ -158,7 +160,7 @@ class NotificationTemplates {
       text: `
         Consultation Completed - TeleHealX
         
-        Dear ${data.patientName},
+       
         
         Your consultation with Dr. ${data.doctorName} has been completed successfully.
         
@@ -187,7 +189,7 @@ class NotificationTemplates {
             <h1 style="margin: 0;">Appointment Cancelled</h1>
           </div>
           <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px;">
-            <p>Dear ${data.patientName},</p>
+            
             <p>Your appointment has been cancelled with the following details:</p>
             
             <div style="background: white; padding: 15px; border-left: 4px solid #f44336; margin: 20px 0;">
@@ -215,7 +217,7 @@ class NotificationTemplates {
       text: `
         Appointment Cancelled - TeleHealX
         
-        Dear ${data.patientName},
+       
         
         Your appointment has been cancelled:
         
@@ -245,7 +247,7 @@ class NotificationTemplates {
             <h1 style="margin: 0;">Prescription Issued</h1>
           </div>
           <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px;">
-            <p>Dear ${data.patientName},</p>
+            
             <p>Dr. ${data.doctorName} has issued a new prescription for you.</p>
             
             <div style="background: white; padding: 15px; border-left: 4px solid #FF9800; margin: 20px 0;">
@@ -271,8 +273,6 @@ class NotificationTemplates {
       `,
       text: `
         New Prescription Available - TeleHealX
-        
-        Dear ${data.patientName},
         
         Dr. ${data.doctorName} has issued a new prescription for you.
         

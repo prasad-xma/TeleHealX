@@ -56,7 +56,7 @@ class EmailService {
           <h1 style="margin: 0;">Appointment Confirmed</h1>
         </div>
         <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px;">
-          <p>Dear ${data.patientName},</p>
+          
           <p>Your appointment has been successfully booked with the following details:</p>
 
           <div style="background: white; padding: 15px; border-left: 4px solid #4CAF50; margin: 20px 0;">
@@ -95,7 +95,7 @@ class EmailService {
           <h1 style="margin: 0;">Consultation Completed</h1>
         </div>
         <div style="background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px;">
-          <p>Dear ${data.patientName},</p>
+          
           <p>Your consultation with Dr. ${data.doctorName} has been completed successfully.</p>
 
           <div style="background: white; padding: 15px; border-left: 4px solid #2196F3; margin: 20px 0;">
