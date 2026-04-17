@@ -442,6 +442,46 @@ class NotificationController {
       });
     }
   }
+
+  async sendAppointmentCancelledNotifications(req, res) {
+    try {
+      const { appointmentData, patientData, doctorData } = req.body;
+
+      if (!appointmentData || !patientData || !doctorData) {
+        return res.status(400).json({
+          success: false,
+          message: 'Missing required data: appointmentData, patientData, or doctorData'
+        });
+      }
+
+      const notificationService = require('../services/notificationService');
+      const result = await notificationService.sendAppointmentCancelledNotifications(
+        appointmentData,
+        patientData,
+        doctorData
+      );
+
+      if (result.success) {
+        res.status(200).json({
+          success: true,
+          message: 'Appointment cancellation notifications sent successfully',
+          data: result
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: 'Failed to send appointment cancellation notifications',
+          error: result.error
+        });
+      }
+    } catch (error) {
+      logger.error('Error sending appointment cancellation notifications:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  }
 }
 
 module.exports = new NotificationController();
