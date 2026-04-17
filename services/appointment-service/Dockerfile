@@ -7,6 +7,6 @@ RUN npm config set fetch-retries 5 && npm config set fetch-retry-factor 2 && npm
 
 COPY . .
 
-EXPOSE 5008
+EXPOSE 5007
 
 CMD ["npm", "start"]
