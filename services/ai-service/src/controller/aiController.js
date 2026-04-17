@@ -1,4 +1,4 @@
-const { checkSymptoms } = require('../service/aiService');
+const { checkSymptoms, getLatestResultByPatient } = require('../service/aiService');
 
 const analyzeSymptoms = async (req, res) => {
     try {
@@ -22,6 +22,25 @@ const analyzeSymptoms = async (req, res) => {
     }
 };
 
+const getLatestResult = async (req, res) => {
+    try {
+        const patientId = req.query.patientId;
+
+        if (!patientId) {
+            return res.status(400).json({ message: 'patientId is required' });
+        }
+
+        const data = await getLatestResultByPatient({ patientId });
+        return res.status(200).json(data);
+    } catch (error) {
+        console.error(error);
+        return res
+            .status(500)
+            .json({ message: error.message || 'Failed to fetch latest symptom result' });
+    }
+};
+
 module.exports = {
     analyzeSymptoms,
+    getLatestResult,
 };
