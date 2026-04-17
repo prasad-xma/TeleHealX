@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telehealx-config
+data:
+  AUTH_SERVICE_URL: http://auth-service:5001
+  USER_SERVICE_URL: http://auth-service:5001
+  PATIENT_SERVICE_URL: http://patient-service:5015
+  DOCTOR_SERVICE_URL: http://doctor-service:5010
+  AI_SERVICE_URL: http://ai-service:5004
+  APPOINTMENT_SERVICE_URL: http://appointment-service:5007
+  PAYMENT_SERVICE_URL: http://payment-service:5006
+  TELEMEDICINE_SERVICE_URL: http://telemedicine-service:5005
+  NOTIFICATION_SERVICE_URL: http://notification-service:5008
+  CLIENT_URL: http://localhost:5173
+  DEFAULT_TIMEZONE: Asia/Colombo
+  NODE_ENV: development
+  CORS_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174
+  USE_MOCK_DOCTOR_SERVICE: "false"
+  USE_MOCK_PATIENT_SERVICE: "false"
+  MAX_RESCHEDULE_COUNT: "2"
+  STRIPE_CURRENCY: usd
+  SERVICE_NAME_APPOINTMENT: appointment-service
+  SERVICE_NAME_PAYMENT: payment-service
