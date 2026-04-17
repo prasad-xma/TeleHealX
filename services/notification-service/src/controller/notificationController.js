@@ -310,23 +310,23 @@ class NotificationController {
 
   // Send appointment booking notifications to both patient and doctor
   async sendAppointmentBookingNotifications(req, res) {
-    console.log('📨 [NOTIFICATION CONTROLLER] Received appointment booking notification request');
-    console.log('📨 [NOTIFICATION CONTROLLER] Request body:', req.body);
+    console.log('[NOTIFICATION CONTROLLER] Received appointment booking notification request');
+    console.log('[NOTIFICATION CONTROLLER] Request body:', req.body);
 
     try {
       const { appointmentData, patientData, doctorData } = req.body;
 
-      console.log('🔍 [NOTIFICATION CONTROLLER] Validating notification data...');
+      console.log('[NOTIFICATION CONTROLLER] Validating notification data...');
       // Validate required data
       if (!appointmentData || !patientData || !doctorData) {
-        console.error('❌ [NOTIFICATION CONTROLLER] Missing required data:', { appointmentData: !!appointmentData, patientData: !!patientData, doctorData: !!doctorData });
+        console.error('[NOTIFICATION CONTROLLER] Missing required data:', { appointmentData: !!appointmentData, patientData: !!patientData, doctorData: !!doctorData });
         return res.status(400).json({
           success: false,
           message: 'Missing required data: appointmentData, patientData, or doctorData'
         });
       }
 
-      console.log('⚙️ [NOTIFICATION CONTROLLER] Calling notification service...');
+      console.log('[NOTIFICATION CONTROLLER] Calling notification service...');
       const notificationService = require('../services/notificationService');
       const result = await notificationService.sendAppointmentBookingNotifications(
         appointmentData,
@@ -335,14 +335,14 @@ class NotificationController {
       );
 
       if (result.success) {
-        console.log('✅ [NOTIFICATION CONTROLLER] Appointment booking notifications sent successfully');
+        console.log('[NOTIFICATION CONTROLLER] Appointment booking notifications sent successfully');
         res.status(200).json({
           success: true,
           message: 'Appointment booking notifications sent successfully',
           data: result
         });
       } else {
-        console.error('❌ [NOTIFICATION CONTROLLER] Failed to send notifications:', result.error);
+        console.error('[NOTIFICATION CONTROLLER] Failed to send notifications:', result.error);
         res.status(500).json({
           success: false,
           message: 'Failed to send appointment booking notifications',
@@ -351,7 +351,7 @@ class NotificationController {
       }
 
     } catch (error) {
-      console.error('❌ [NOTIFICATION CONTROLLER] Error in sendAppointmentBookingNotifications:', error);
+      console.error('[NOTIFICATION CONTROLLER] Error in sendAppointmentBookingNotifications:', error);
       res.status(500).json({
         success: false,
         message: 'Internal server error'

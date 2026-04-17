@@ -5,7 +5,7 @@ const errorMiddleware = (error, req, res, next) => {
   const message = error.message || "Internal Server Error";
 
   if (process.env.NODE_ENV !== "production") {
-    console.error("❌ Payment Service Error:", {
+    console.error("Payment Service Error:", {
       message: error.message,
       stack: error.stack,
       details: error.details || null

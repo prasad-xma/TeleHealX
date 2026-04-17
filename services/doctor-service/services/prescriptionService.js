@@ -11,7 +11,7 @@ const createPrescription = async (prescriptionData) => {
 			.select('-__v');
 	} catch (error) {
 		console.error('Error creating prescription:', error.message);
-		throw new Error('Failed to create prescription');
+		throw error;
 	}
 };
 
@@ -91,10 +91,64 @@ const updatePrescriptionStatus = async (prescriptionId, doctorId, status) => {
 	}
 };
 
+const deletePrescription = async (prescriptionId, doctorId) => {
+	try {
+		const prescription = await Prescription.findById(prescriptionId);
+
+		if (!prescription) {
+			throw new Error('Prescription not found');
+		}
+
+		// Only the issuing doctor can delete the prescription
+		if (prescription.doctorId.toString() !== doctorId.toString()) {
+			throw new Error('Not authorized to delete this prescription');
+		}
+
+		await Prescription.findByIdAndDelete(prescriptionId);
+
+		return prescription;
+	} catch (error) {
+		throw new Error('Failed to delete prescription');
+	}
+};
+
+const updatePrescription = async (prescriptionId, doctorId, updateData) => {
+	try {
+		const prescription = await Prescription.findById(prescriptionId);
+
+		if (!prescription) {
+			throw new Error('Prescription not found');
+		}
+
+		// Only the issuing doctor can update the prescription
+		if (prescription.doctorId.toString() !== doctorId.toString()) {
+			throw new Error('Not authorized to update this prescription');
+		}
+
+		// Update fields
+		if (updateData.patientId) prescription.patientId = updateData.patientId;
+		if (updateData.appointmentId !== undefined) prescription.appointmentId = updateData.appointmentId;
+		if (updateData.medications) prescription.medications = updateData.medications;
+		if (updateData.diagnosis) prescription.diagnosis = updateData.diagnosis;
+		if (updateData.notes !== undefined) prescription.notes = updateData.notes;
+
+		await prescription.save();
+
+		return await Prescription.findById(prescription._id)
+			.populate('doctorId', 'name email')
+			.populate('patientId', 'name email')
+			.select('-__v');
+	} catch (error) {
+		throw new Error('Failed to update prescription');
+	}
+};
+
 module.exports = {
 	createPrescription,
 	getPrescriptionsByDoctor,
 	getPrescriptionById,
 	getPrescriptionsByPatient,
 	updatePrescriptionStatus,
+	deletePrescription,
+	updatePrescription,
 };

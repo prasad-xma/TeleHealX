@@ -11,10 +11,10 @@ class NotificationService {
 
   // Send appointment booking notifications to both patient and doctor
   async sendAppointmentBookingNotifications(appointmentData, patientData, doctorData) {
-    console.log('📧 [NOTIFICATION SERVICE] Starting appointment booking notifications');
-    console.log('📧 [NOTIFICATION SERVICE] Appointment data:', appointmentData);
-    console.log('📧 [NOTIFICATION SERVICE] Patient data:', patientData);
-    console.log('📧 [NOTIFICATION SERVICE] Doctor data:', doctorData);
+    console.log('[NOTIFICATION SERVICE] Starting appointment booking notifications');
+    console.log('[NOTIFICATION SERVICE] Appointment data:', appointmentData);
+    console.log('[NOTIFICATION SERVICE] Patient data:', patientData);
+    console.log('[NOTIFICATION SERVICE] Doctor data:', doctorData);
 
     try {
       const notifications = [];
@@ -33,7 +33,7 @@ class NotificationService {
       const patientPhone = String(patientData.phone || '').trim();
       const doctorPhone = String(doctorData.phone || '').trim();
 
-      console.log('📧 [NOTIFICATION SERVICE] Sending email to patient...');
+      console.log('[NOTIFICATION SERVICE] Sending email to patient...');
       // Send email to patient
       if (patientData.email) {
         const patientEmailResult = await this.emailService.sendAppointmentBookingEmail(
@@ -47,10 +47,10 @@ class NotificationService {
           success: patientEmailResult.success,
           error: patientEmailResult.error
         });
-        console.log('📧 [NOTIFICATION SERVICE] Patient email result:', patientEmailResult);
+        console.log('[NOTIFICATION SERVICE] Patient email result:', patientEmailResult);
       }
 
-      console.log('📱 [NOTIFICATION SERVICE] Sending SMS to patient...');
+      console.log('[NOTIFICATION SERVICE] Sending SMS to patient...');
       // Send SMS only to the registered patient number.
       // The free Twilio account is limited to a single verified recipient, so
       // we avoid sending appointment-booking SMS to the doctor here.
@@ -66,12 +66,12 @@ class NotificationService {
           success: patientSmsResult.success,
           error: patientSmsResult.error
         });
-        console.log('📱 [NOTIFICATION SERVICE] Patient SMS result:', patientSmsResult);
+        console.log('[NOTIFICATION SERVICE] Patient SMS result:', patientSmsResult);
       } else {
-        console.log('📱 [NOTIFICATION SERVICE] Skipping patient SMS because no registered phone number was provided');
+        console.log('[NOTIFICATION SERVICE] Skipping patient SMS because no registered phone number was provided');
       }
 
-      console.log('📧 [NOTIFICATION SERVICE] Sending email to doctor...');
+      console.log('[NOTIFICATION SERVICE] Sending email to doctor...');
       // Send email to doctor
       if (doctorData.email) {
         const doctorEmailResult = await this.emailService.sendAppointmentBookingEmail(
@@ -85,14 +85,14 @@ class NotificationService {
           success: doctorEmailResult.success,
           error: doctorEmailResult.error
         });
-        console.log('📧 [NOTIFICATION SERVICE] Doctor email result:', doctorEmailResult);
+        console.log('[NOTIFICATION SERVICE] Doctor email result:', doctorEmailResult);
       }
 
       if (doctorPhone) {
-        console.log('📱 [NOTIFICATION SERVICE] Doctor SMS skipped for booking notifications (free-tier single-recipient mode)');
+        console.log('[NOTIFICATION SERVICE] Doctor SMS skipped for booking notifications (free-tier single-recipient mode)');
       }
 
-      console.log('✅ [NOTIFICATION SERVICE] Appointment booking notifications completed');
+      console.log('[NOTIFICATION SERVICE] Appointment booking notifications completed');
       logger.info('Appointment booking notifications sent', {
         appointmentId: appointmentData._id,
         notifications: notifications.length
@@ -105,7 +105,7 @@ class NotificationService {
       };
 
     } catch (error) {
-      console.error('❌ [NOTIFICATION SERVICE] Error sending appointment booking notifications:', error);
+      console.error('[NOTIFICATION SERVICE] Error sending appointment booking notifications:', error);
       return {
         success: false,
         error: error.message,

@@ -1,10 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stethoscope, Calendar, FileText, Clock, Star, ArrowRight, Info } from 'lucide-react';
+import { Stethoscope, Calendar, FileText, Clock, ArrowRight } from 'lucide-react';
+import { getMyDoctorAppointments } from '../../services/appointmentService';
+import { getMyPrescriptions } from '../../services/doctorService';
 
 const DoctorOverviewPage = () => {
   const navigate = useNavigate();
   const [doctorName, setDoctorName] = useState('Doctor');
+  const [appointmentsToday, setAppointmentsToday] = useState(0);
+  const [prescriptionsIssued, setPrescriptionsIssued] = useState(0);
+  const [pendingApprovals, setPendingApprovals] = useState(0);
 
   useEffect(() => {
     const userStr = localStorage.getItem('user');
@@ -14,11 +19,43 @@ const DoctorOverviewPage = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        // Fetch appointments
+        const appointmentsData = await getMyDoctorAppointments();
+        if (appointmentsData?.appointments) {
+          // Count appointments for today
+          const today = new Date().toISOString().split('T')[0];
+          const todayAppointments = appointmentsData.appointments.filter(
+            (apt: any) => apt.date === today
+          ).length;
+          setAppointmentsToday(todayAppointments);
+
+          // Count pending approvals (appointments with PENDING status)
+          const pendingCount = appointmentsData.appointments.filter(
+            (apt: any) => apt.status === 'PENDING' || apt.status === 'scheduled'
+          ).length;
+          setPendingApprovals(pendingCount);
+        }
+
+        // Fetch prescriptions
+        const prescriptionsData = await getMyPrescriptions();
+        if (prescriptionsData?.data) {
+          setPrescriptionsIssued(prescriptionsData.data.length);
+        }
+      } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+      }
+    };
+
+    fetchDashboardStats();
+  }, []);
+
   const stats = [
-    { label: 'Total Appointments Today', value: '8', icon: Calendar, color: 'blue' },
-    { label: 'Prescriptions Issued', value: '24', icon: FileText, color: 'green' },
-    { label: 'Pending Approvals', value: '3', icon: Clock, color: 'orange' },
-    { label: 'Average Rating', value: '4.8', icon: Star, color: 'yellow' },
+    { label: 'Total Appointments Today', value: appointmentsToday.toString(), icon: Calendar, color: 'blue' },
+    { label: 'Prescriptions Issued', value: prescriptionsIssued.toString(), icon: FileText, color: 'green' },
+    { label: 'Pending Approvals', value: pendingApprovals.toString(), icon: Clock, color: 'orange' },
   ];
 
   const quickActions = [
@@ -32,7 +69,6 @@ const DoctorOverviewPage = () => {
       blue: 'from-blue-500 to-blue-600 bg-blue-50',
       green: 'from-green-500 to-green-600 bg-green-50',
       orange: 'from-orange-500 to-orange-600 bg-orange-50',
-      yellow: 'from-yellow-500 to-yellow-600 bg-yellow-50',
     };
     return colors[color as keyof typeof colors] || colors.blue;
   };
@@ -115,20 +151,6 @@ const DoctorOverviewPage = () => {
           </div>
         </div>
 
-        {/* Notice Card */}
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 rounded-2xl border border-blue-200 p-6">
-          <div className="flex items-start gap-4">
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
-              <Info size={20} className="text-white" />
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-800 mb-1">Coming Soon</h3>
-              <p className="text-gray-600">
-                Telemedicine and Appointment modules are coming soon. Stay tuned for more features!
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </>
   );
