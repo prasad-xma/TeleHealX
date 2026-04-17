@@ -32,7 +32,7 @@ services:
       - "5001:5001"
     environment:
       PORT: 5001
-      MONGODB: "mongodb://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@ac-jtvjobw-shard-00-00.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-01.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-02.fa7keoe.mongodb.net:27017/?ssl=true&replicaSet=atlas-6j0c45-shard-0&authSource=admin&appName=Cluster0"
+      MONGODB: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
       JWT_SECRET: "nd2M065UNB0YqAQK557sP1o1XX4bZEDsbonTwjpNkWkjdH36otFoeT6RcEowtXS"
 
   ai-service:
@@ -42,7 +42,7 @@ services:
       - "5004:5004"
     environment:
       PORT: 5004
-      MONGODB: "mongodb://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@ac-jtvjobw-shard-00-00.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-01.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-02.fa7keoe.mongodb.net:27017/?ssl=true&replicaSet=atlas-6j0c45-shard-0&authSource=admin&appName=Cluster0"
+      MONGODB: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
 
   telemedicine-service:
     build:
@@ -58,13 +58,13 @@ services:
       context: ./services/payment-service
     ports:
       - "5006:5006"
+    env_file:
+      - ./services/payment-service/.env
     environment:
       PORT: 5006
-      MONGODB_URI: "mongodb://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@ac-jtvjobw-shard-00-00.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-01.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-02.fa7keoe.mongodb.net:27017/?ssl=true&replicaSet=atlas-6j0c45-shard-0&authSource=admin&appName=Cluster0"
+      MONGODB_URI: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
       APPOINTMENT_SERVICE_URL: "http://appointment-service:5007"
       INTERNAL_SERVICE_SECRET: "telehealx-secret"
-      STRIPE_SECRET_KEY: "your-stripe-secret-key"
-      STRIPE_WEBHOOK_SECRET: "your-stripe-webhook-secret"
 
   appointment-service:
     build:
@@ -73,7 +73,7 @@ services:
       - "5007:5007"
     environment:
       PORT: 5007
-      MONGODB_URI: "mongodb://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@ac-jtvjobw-shard-00-00.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-01.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-02.fa7keoe.mongodb.net:27017/?ssl=true&replicaSet=atlas-6j0c45-shard-0&authSource=admin&appName=Cluster0"
+      MONGODB_URI: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
       JWT_SECRET: "nd2M065UNB0YqAQK557sP1o1XX4bZEDsbonTwjpNkWkjdH36otFoeT6RcEowtXS"
       AUTH_SERVICE_URL: "http://auth-service:5001"
       PATIENT_SERVICE_URL: "http://patient-service:5015"
@@ -89,7 +89,7 @@ services:
       - "5010:5010"
     environment:
       PORT: 5010
-      MONGODB: "mongodb://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
+      MONGODB: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
       PATIENT_SERVICE_URL: "http://patient-service:5015"
       INTERNAL_API_KEY: "telehealx-secret"
 
@@ -100,7 +100,7 @@ services:
       - "5015:5015"
     environment:
       PORT: 5015
-      MONGODB: "mongodb://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@ac-jtvjobw-shard-00-00.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-01.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-02.fa7keoe.mongodb.net:27017/?ssl=true&replicaSet=atlas-6j0c45-shard-0&authSource=admin&appName=Cluster0"
+      MONGODB: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
       JWT_SECRET: "nd2M065UNB0YqAQK557sP1o1XX4bZEDsbonTwjpNkWkjdH36otFoeT6RcEowtXS"
 
   notification-service:
@@ -110,7 +110,7 @@ services:
       - "5008:5008"
     environment:
       PORT: 5008
-      MONGODB_URI: "mongodb://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@ac-jtvjobw-shard-00-00.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-01.fa7keoe.mongodb.net:27017,ac-jtvjobw-shard-00-02.fa7keoe.mongodb.net:27017/?ssl=true&replicaSet=atlas-6j0c45-shard-0&authSource=admin&appName=Cluster0"
+      MONGODB_URI: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
 
   client:
     build:
