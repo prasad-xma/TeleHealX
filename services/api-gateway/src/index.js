@@ -24,7 +24,7 @@ app.use((req, res, next) => {
 });
 
 const authServiceUrl = process.env.AUTH_SERVICE_URL || 'http://localhost:5001';
-const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5002';
+const userServiceUrl = process.env.USER_SERVICE_URL || 'http://localhost:5001';
 const patientServiceUrl = process.env.PATIENT_SERVICE_URL || 'http://localhost:5015';
 const doctorServiceUrl = process.env.DOCTOR_SERVICE_URL || 'http://localhost:5010';
 const aiServiceUrl = process.env.AI_SERVICE_URL || 'http://localhost:5004';
@@ -47,7 +47,7 @@ app.use(
 
 app.use(
   '/api/users',
-  createServiceProxy(userServiceUrl, '/api/users')
+  createServiceProxy(userServiceUrl, '/api/auth/users')
 );
 
 app.use(
@@ -89,6 +89,25 @@ app.use(
   '/api/notifications',
   createServiceProxy(notificationServiceUrl, '/api/notifications')
 );
+
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    service: 'api-gateway',
+    timestamp: new Date().toISOString(),
+    serviceUrls: {
+      auth: authServiceUrl,
+      user: userServiceUrl,
+      patient: patientServiceUrl,
+      doctor: doctorServiceUrl,
+      ai: aiServiceUrl,
+      appointment: appointmentServiceUrl,
+      payment: paymentServiceUrl,
+      telemedicine: telemedicineServiceUrl,
+      notification: notificationServiceUrl
+    }
+  });
+});
 
 app.get('/', (req, res) => {
   res.send('API Gateway running...');
