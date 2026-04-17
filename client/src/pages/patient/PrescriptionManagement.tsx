@@ -107,10 +107,15 @@ const PrescriptionManagement = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
-      day: 'numeric'
+      day: 'numeric',
     });
   };
 
@@ -653,7 +658,6 @@ const PrescriptionManagement = () => {
                       <p><strong>Valid Until:</strong> {formatDate(selectedPrescription.validUntil)}</p>
                       <p><strong>Status:</strong> 
                         <span style={{ 
-                          color: getStatusColor(selectedPrescription.isActive),
                           background: getStatusColor(selectedPrescription.isActive),
                           color: 'white',
                           padding: '0.25rem 0.75rem',
