@@ -1,4 +1,5 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const mongoose = require('mongoose');
 const Questionnaire = require('../models/Questionnaire');
 const Result = require('../models/Result');
 
@@ -116,6 +117,39 @@ Return a concise response with:
     };
 };
 
+const getLatestResultByPatient = async ({ patientId }) => {
+    if (!patientId) {
+        throw new Error('patientId is required');
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(String(patientId))) {
+        throw new Error('Invalid patientId');
+    }
+
+    const latestQuestionnaire = await Questionnaire.findOne({ patientId })
+        .sort({ createdAt: -1 })
+        .lean();
+
+    if (!latestQuestionnaire) {
+        return {
+            questionnaire: null,
+            result: null,
+            aiResponse: '',
+        };
+    }
+
+    const latestResult = await Result.findOne({ questionnaireId: latestQuestionnaire._id })
+        .sort({ createdAt: -1 })
+        .lean();
+
+    return {
+        questionnaire: latestQuestionnaire,
+        result: latestResult || null,
+        aiResponse: latestResult?.aiResponse || '',
+    };
+};
+
 module.exports = {
     checkSymptoms,
+    getLatestResultByPatient,
 };

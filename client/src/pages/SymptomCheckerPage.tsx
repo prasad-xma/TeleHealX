@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { analyzeSymptoms } from '../services/aiService';
+import { analyzeSymptoms, getLatestSymptomResult } from '../services/aiService';
 
 const SymptomCheckerPage = () => {
   const navigate = useNavigate();
@@ -12,7 +12,30 @@ const SymptomCheckerPage = () => {
   const [symptoms, setSymptoms] = useState('');
   const [answer, setAnswer] = useState('');
   const [loading, setLoading] = useState(false);
+  const [latestLoading, setLatestLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const patientId = user?._id || user?.id || '';
+
+  const loadLatestResult = async () => {
+    if (!patientId) {
+      return;
+    }
+
+    setLatestLoading(true);
+    try {
+      const response = await getLatestSymptomResult(patientId);
+      setAnswer(response.data?.aiResponse || '');
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to fetch latest symptom result.');
+    } finally {
+      setLatestLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLatestResult();
+  }, [patientId]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -28,10 +51,11 @@ const SymptomCheckerPage = () => {
     try {
       const response = await analyzeSymptoms({
         symptoms,
-        patientId: user?._id || user?.id || null,
+        patientId: patientId || null,
       });
 
       setAnswer(response.data?.aiResponse || 'No response was returned by the AI service.');
+      await loadLatestResult();
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to analyze symptoms.');
     } finally {
@@ -128,7 +152,7 @@ const SymptomCheckerPage = () => {
           </button>
         </form>
 
-        {answer ? (
+        {latestLoading ? (
           <div
             style={{
               marginTop: '1.5rem',
@@ -138,7 +162,20 @@ const SymptomCheckerPage = () => {
               border: '1px solid #bfdbfe'
             }}
           >
-            <h2 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#1e3a8a' }}>Generated Answer</h2>
+            <h2 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#1e3a8a' }}>Latest Saved Answer</h2>
+            <p style={{ margin: 0, color: '#334155' }}>Loading latest result...</p>
+          </div>
+        ) : answer ? (
+          <div
+            style={{
+              marginTop: '1.5rem',
+              padding: '1rem',
+              borderRadius: '14px',
+              background: '#eff6ff',
+              border: '1px solid #bfdbfe'
+            }}
+          >
+            <h2 style={{ marginTop: 0, marginBottom: '0.5rem', color: '#1e3a8a' }}>Latest Saved Answer</h2>
             <pre style={{ margin: 0, whiteSpace: 'pre-wrap', fontFamily: 'inherit', color: '#0f172a' }}>{answer}</pre>
           </div>
         ) : null}

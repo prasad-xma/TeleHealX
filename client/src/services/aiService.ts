@@ -11,3 +11,14 @@ export const analyzeSymptoms = async (payload: { symptoms: string; patientId?: s
     throw error;
   }
 };
+
+export const getLatestSymptomResult = async (patientId: string) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/latest`, {
+      params: { patientId }
+    });
+    return response;
+  } catch (error: any) {
+    throw error;
+  }
+};

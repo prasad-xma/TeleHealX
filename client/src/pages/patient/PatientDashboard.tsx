@@ -23,7 +23,7 @@ import {
   deleteMedicalReport,
   downloadMedicalReport
 } from '../../services/patientService';
-import { analyzeSymptoms } from '../../services/aiService';
+import { analyzeSymptoms, getLatestSymptomResult } from '../../services/aiService';
 
 const PatientDashboard = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -48,8 +48,29 @@ const PatientDashboard = () => {
       fetchMedicalReports();
     } else if (activeTab === 'prescriptions') {
       fetchPrescriptions();
+    } else if (activeTab === 'symptom-checker') {
+      fetchLatestSymptomResult();
     }
   }, [activeTab]);
+
+  const fetchLatestSymptomResult = async () => {
+    const patientId = user?._id || user?.id;
+
+    if (!patientId) {
+      return;
+    }
+
+    setAiLoading(true);
+    try {
+      const response = await getLatestSymptomResult(patientId);
+      setAiResponse(response.data?.aiResponse || '');
+    } catch (fetchError: any) {
+      setError(fetchError.response?.data?.message || 'Failed to fetch latest symptom result');
+      setTimeout(() => setError(''), 3000);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   const fetchMedicalHistory = async () => {
     setLoading(true);
@@ -191,6 +212,7 @@ const PatientDashboard = () => {
       });
 
       setAiResponse(response.data?.aiResponse || 'No response was returned by AI.');
+      await fetchLatestSymptomResult();
       setSuccess('Symptoms analyzed successfully');
       setTimeout(() => setSuccess(''), 3000);
     } catch (analysisError: any) {
