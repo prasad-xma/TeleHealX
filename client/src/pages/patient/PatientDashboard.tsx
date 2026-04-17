@@ -188,7 +188,12 @@ const PatientDashboard = () => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    if (!dateString) return 'N/A';
+    
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return 'Invalid Date';
+    
+    return date.toLocaleDateString('en-US', {
       year: 'numeric',
       month: 'short',
       day: 'numeric'
@@ -231,23 +236,20 @@ const PatientDashboard = () => {
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Fredoka+One&display=swap');
 
         :root {
-          --patient-bg: #0f172a;
-          --patient-surface: #f8fafc;
-          --patient-surface-2: #eef2f7;
-          --patient-panel: rgba(248, 250, 252, 0.96);
-          --patient-border: rgba(148, 163, 184, 0.18);
-          --patient-text: #0f172a;
-          --patient-muted: #64748b;
-          --patient-primary: #2563eb;
-          --patient-primary-2: #1d4ed8;
+          --patient-bg: #EFF6FF;
+          --patient-surface: #F8FAFC;
+          --patient-surface-2: #E2E8F0;
+          --patient-panel: #FFFFFF;
+          --patient-border: #CBD5E1;
+          --patient-text: #1E293B;
+          --patient-muted: #64748B;
+          --patient-primary: #3B82F6;
+          --patient-primary-2: #2563EB;
         }
 
         .patient-bg {
           min-height: 100vh;
-          background:
-            radial-gradient(circle at top left, rgba(37, 99, 235, 0.18), transparent 28%),
-            radial-gradient(circle at bottom right, rgba(15, 118, 110, 0.1), transparent 24%),
-            linear-gradient(135deg, #0f172a 0%, #111827 52%, #1f2937 100%);
+          background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 40%, #BFDBFE 100%);
           font-family: 'Nunito', sans-serif;
           color: var(--patient-text);
           position: relative;
@@ -257,10 +259,24 @@ const PatientDashboard = () => {
         .patient-bg::before {
           content: '';
           position: absolute;
-          inset: 0;
-          background-image: linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-          background-size: 48px 48px;
-          mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.4), transparent 82%);
+          width: 320px;
+          height: 320px;
+          top: -90px;
+          left: -70px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
+          pointer-events: none;
+        }
+
+        .patient-bg::after {
+          content: '';
+          position: absolute;
+          width: 380px;
+          height: 380px;
+          right: -80px;
+          bottom: -120px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(37,99,235,0.15), transparent 70%);
           pointer-events: none;
         }
 
@@ -277,16 +293,15 @@ const PatientDashboard = () => {
         .patient-side {
           width: 320px;
           flex: 0 0 320px;
-          border-radius: 30px;
-          background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(17, 24, 39, 0.9));
-          border: 1px solid rgba(148, 163, 184, 0.14);
-          box-shadow: 0 24px 60px rgba(15, 23, 42, 0.34);
-          padding: 1.35rem;
-          color: #e2e8f0;
+          border-radius: 24px;
+          background: #FFFFFF;
+          border: 1px solid #CBD5E1;
+          box-shadow: 0 20px 50px rgba(59, 130, 246, 0.15);
+          padding: 1.5rem;
+          color: #1E293B;
           display: flex;
           flex-direction: column;
-          gap: 1rem;
-          backdrop-filter: blur(16px);
+          gap: 1.25rem;
           position: sticky;
           top: 1.5rem;
           align-self: flex-start;
@@ -303,11 +318,11 @@ const PatientDashboard = () => {
           width: 52px;
           height: 52px;
           border-radius: 16px;
-          background: linear-gradient(135deg, #2563eb, #1d4ed8 65%, #0f766e);
+          background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 60%, #93C5FD 100%);
           display: grid;
           place-items: center;
           color: white;
-          box-shadow: 0 12px 24px rgba(37, 99, 235, 0.3);
+          box-shadow: 0 12px 24px rgba(59, 130, 246, 0.25);
           flex: 0 0 auto;
         }
 
@@ -321,7 +336,7 @@ const PatientDashboard = () => {
           font-size: 1.15rem;
           font-weight: 900;
           letter-spacing: 0.01em;
-          color: #f8fafc;
+          color: #1E293B;
         }
 
         .brand-subtitle {
@@ -332,20 +347,20 @@ const PatientDashboard = () => {
         }
 
         .side-panel {
-          padding: 1rem;
-          border-radius: 24px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(148, 163, 184, 0.12);
+          padding: 1.25rem;
+          border-radius: 18px;
+          background: #F8FAFC;
+          border: 1px solid #E2E8F0;
         }
 
         .side-kicker {
           display: inline-flex;
           align-items: center;
           gap: 0.45rem;
-          padding: 0.35rem 0.7rem;
+          padding: 0.4rem 0.8rem;
           border-radius: 999px;
-          background: rgba(37, 99, 235, 0.15);
-          color: #bfdbfe;
+          background: #EFF6FF;
+          color: #3B82F6;
           font-size: 0.78rem;
           font-weight: 800;
           margin-bottom: 0.8rem;
@@ -355,12 +370,12 @@ const PatientDashboard = () => {
           margin: 0;
           font-size: 1.45rem;
           line-height: 1.15;
-          color: #ffffff;
+          color: #1E293B;
         }
 
         .side-panel p {
           margin: 0.75rem 0 0;
-          color: #cbd5e1;
+          color: #64748B;
           font-size: 0.92rem;
           line-height: 1.65;
         }
@@ -372,23 +387,24 @@ const PatientDashboard = () => {
         }
 
         .metric-card {
-          padding: 0.9rem;
-          border-radius: 18px;
-          background: rgba(255, 255, 255, 0.05);
-          border: 1px solid rgba(148, 163, 184, 0.12);
+          padding: 1rem;
+          border-radius: 16px;
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          box-shadow: 0 4px 12px rgba(59, 130, 246, 0.06);
         }
 
         .metric-card span {
           display: block;
           font-size: 0.78rem;
-          color: #94a3b8;
+          color: #64748B;
           margin-bottom: 0.35rem;
           font-weight: 700;
         }
 
         .metric-card strong {
           display: block;
-          color: #f8fafc;
+          color: #3B82F6;
           font-size: 1.4rem;
           font-weight: 900;
           line-height: 1;
@@ -401,13 +417,13 @@ const PatientDashboard = () => {
 
         .nav-item {
           width: 100%;
-          border: 1px solid rgba(148, 163, 184, 0.12);
-          background: rgba(255, 255, 255, 0.035);
-          color: #cbd5e1;
+          border: 1px solid #E2E8F0;
+          background: #F8FAFC;
+          color: #475569;
           padding: 0.95rem 1rem;
-          border-radius: 18px;
+          border-radius: 14px;
           cursor: pointer;
-          transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease;
+          transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
           display: flex;
           align-items: center;
           justify-content: space-between;
@@ -418,17 +434,18 @@ const PatientDashboard = () => {
         }
 
         .nav-item:hover {
-          transform: translateY(-1px);
-          border-color: rgba(96, 165, 250, 0.42);
-          background: rgba(37, 99, 235, 0.16);
-          color: #eff6ff;
+          transform: translateY(-2px);
+          border-color: #3B82F6;
+          background: #EFF6FF;
+          color: #1E40AF;
+          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.12);
         }
 
         .nav-item.active {
-          background: linear-gradient(135deg, rgba(37, 99, 235, 0.35), rgba(29, 78, 216, 0.5));
-          border-color: rgba(191, 219, 254, 0.45);
-          color: #ffffff;
-          box-shadow: 0 16px 30px rgba(29, 78, 216, 0.18);
+          background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 60%, #93C5FD 100%);
+          border-color: #2563EB;
+          color: white;
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.3);
         }
 
         .nav-label {
@@ -447,12 +464,11 @@ const PatientDashboard = () => {
         .main-panel {
           flex: 1;
           min-width: 0;
-          border-radius: 30px;
-          background: rgba(248, 250, 252, 0.96);
-          border: 1px solid var(--patient-border);
-          box-shadow: 0 24px 70px rgba(15, 23, 42, 0.18);
-          padding: 1.5rem;
-          backdrop-filter: blur(18px);
+          border-radius: 24px;
+          background: #FFFFFF;
+          border: 1px solid #CBD5E1;
+          box-shadow: 0 20px 50px rgba(59, 130, 246, 0.12);
+          padding: 1.75rem;
         }
 
         .main-top {
@@ -468,13 +484,13 @@ const PatientDashboard = () => {
           margin: 0;
           font-size: clamp(1.6rem, 2.5vw, 2.3rem);
           font-weight: 900;
-          color: #0f172a;
+          color: #1E293B;
           letter-spacing: -0.03em;
         }
 
         .main-subtitle {
           margin: 0.45rem 0 0;
-          color: #64748b;
+          color: #64748B;
           font-size: 0.96rem;
           font-weight: 600;
           line-height: 1.6;
@@ -494,11 +510,11 @@ const PatientDashboard = () => {
           gap: 0.45rem;
           padding: 0.55rem 0.8rem;
           border-radius: 999px;
-          background: #e2e8f0;
-          color: #334155;
+          background: #EFF6FF;
+          color: #3B82F6;
           font-size: 0.82rem;
           font-weight: 800;
-          border: 1px solid #cbd5e1;
+          border: 1px solid #BFDBFE;
         }
 
         .alert {
@@ -513,25 +529,25 @@ const PatientDashboard = () => {
         }
 
         .alert-success {
-          background: #ecfdf5;
-          border: 1px solid #bbf7d0;
+          background: #F0FDF4;
+          border: 1px solid #86EFAC;
           color: #166534;
         }
 
         .alert-error {
-          background: #fef2f2;
-          border: 1px solid #fecaca;
-          color: #991b1b;
+          background: #FEF2F2;
+          border: 1px solid #FECACA;
+          color: #B91C1C;
         }
 
         .tabs-container {
           display: flex;
-          gap: 0.75rem;
-          margin-bottom: 1rem;
-          padding: 0.35rem;
-          border-radius: 22px;
-          background: var(--patient-surface);
-          border: 1px solid #e2e8f0;
+          gap: 0.6rem;
+          margin-bottom: 1.25rem;
+          padding: 0.4rem;
+          border-radius: 16px;
+          background: #F8FAFC;
+          border: 1px solid #E2E8F0;
           overflow-x: auto;
         }
 
@@ -542,8 +558,8 @@ const PatientDashboard = () => {
         .tab-btn {
           background: transparent;
           border: 1px solid transparent;
-          padding: 0.85rem 1rem;
-          border-radius: 16px;
+          padding: 0.75rem 1rem;
+          border-radius: 12px;
           cursor: pointer;
           font-weight: 800;
           color: #475569;
@@ -556,14 +572,14 @@ const PatientDashboard = () => {
         }
 
         .tab-btn:hover:not(.active) {
-          background: #e2e8f0;
-          color: #0f172a;
+          background: #E2E8F0;
+          color: #1E293B;
         }
 
         .tab-btn.active {
-          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+          background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 60%, #93C5FD 100%);
           color: white;
-          box-shadow: 0 12px 24px rgba(37, 99, 235, 0.2);
+          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25);
         }
 
         .content-stack {
@@ -572,11 +588,11 @@ const PatientDashboard = () => {
         }
 
         .content-card {
-          background: rgba(255, 255, 255, 0.9);
-          border-radius: 26px;
-          padding: 1.25rem;
-          box-shadow: 0 12px 32px rgba(15, 23, 42, 0.06);
-          border: 1px solid rgba(148, 163, 184, 0.16);
+          background: #FFFFFF;
+          border-radius: 20px;
+          padding: 1.5rem;
+          box-shadow: 0 8px 24px rgba(59, 130, 246, 0.08);
+          border: 1px solid #E2E8F0;
         }
 
         .card-header {
@@ -584,16 +600,16 @@ const PatientDashboard = () => {
           justify-content: space-between;
           align-items: center;
           gap: 0.9rem;
-          margin-bottom: 1rem;
+          margin-bottom: 1.25rem;
           padding-bottom: 1rem;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #E2E8F0;
           flex-wrap: wrap;
         }
 
         .card-title {
           font-size: 1.15rem;
           font-weight: 900;
-          color: #0f172a;
+          color: #1E293B;
           display: flex;
           align-items: center;
           gap: 0.75rem;
@@ -602,13 +618,13 @@ const PatientDashboard = () => {
 
         .card-subtitle {
           margin: 0.25rem 0 0;
-          color: #64748b;
+          color: #64748B;
           font-size: 0.9rem;
           font-weight: 600;
         }
 
         .btn {
-          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+          background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 60%, #93C5FD 100%);
           color: white;
           border: none;
           padding: 0.8rem 1.25rem;
@@ -624,19 +640,19 @@ const PatientDashboard = () => {
 
         .btn:hover {
           transform: translateY(-2px);
-          box-shadow: 0 14px 28px rgba(37, 99, 235, 0.22);
+          box-shadow: 0 12px 28px rgba(59, 130, 246, 0.3);
         }
 
         .btn.secondary {
-          background: #eef2f7;
-          color: #0f172a;
-          border: 1px solid #dbe2ea;
+          background: #F1F5F9;
+          color: #1E293B;
+          border: 1px solid #CBD5E1;
           box-shadow: none;
         }
 
         .btn.secondary:hover {
-          background: #e2e8f0;
-          box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+          background: #E2E8F0;
+          box-shadow: 0 8px 16px rgba(59, 130, 246, 0.1);
         }
 
         .overview-grid {
@@ -647,19 +663,19 @@ const PatientDashboard = () => {
         }
 
         .overview-card {
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 250, 252, 0.92));
-          border: 1px solid rgba(148, 163, 184, 0.16);
-          border-radius: 24px;
-          padding: 1.2rem;
-          box-shadow: 0 14px 32px rgba(15, 23, 42, 0.07);
+          background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFC 100%);
+          border: 1px solid #E2E8F0;
+          border-radius: 20px;
+          padding: 1.25rem;
+          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.08);
           position: relative;
           overflow: hidden;
           transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
 
         .overview-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 18px 36px rgba(15, 23, 42, 0.09);
+          transform: translateY(-3px);
+          box-shadow: 0 12px 28px rgba(59, 130, 246, 0.12);
         }
 
         .overview-card::after {
@@ -669,40 +685,40 @@ const PatientDashboard = () => {
           width: 90px;
           height: 90px;
           border-radius: 50%;
-          background: radial-gradient(circle, rgba(37, 99, 235, 0.12), transparent 65%);
+          background: radial-gradient(circle, rgba(59, 130, 246, 0.1), transparent 65%);
           pointer-events: none;
         }
 
         .overview-icon {
           width: 58px;
           height: 58px;
-          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-          border-radius: 18px;
+          background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 60%, #93C5FD 100%);
+          border-radius: 16px;
           display: flex;
           align-items: center;
           justify-content: center;
           margin-bottom: 1rem;
           color: white;
-          box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
         }
 
         .overview-title {
           font-size: 1.05rem;
           font-weight: 800;
-          color: #0f172a;
+          color: #1E293B;
           margin-bottom: 0.4rem;
         }
 
         .overview-value {
           font-size: 2rem;
           font-weight: 900;
-          color: #2563eb;
+          color: #3B82F6;
           line-height: 1;
         }
 
         .overview-meta {
           margin-top: 0.5rem;
-          color: #64748b;
+          color: #64748B;
           font-size: 0.88rem;
           font-weight: 600;
         }
@@ -715,28 +731,28 @@ const PatientDashboard = () => {
         }
 
         .feature-card {
-          background: rgba(255, 255, 255, 0.9);
-          border: 1px solid rgba(148, 163, 184, 0.16);
-          border-radius: 24px;
-          padding: 1rem;
-          box-shadow: 0 12px 28px rgba(15, 23, 42, 0.05);
+          background: #FFFFFF;
+          border: 1px solid #E2E8F0;
+          border-radius: 18px;
+          padding: 1.25rem;
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.06);
           transition: transform 0.18s ease, box-shadow 0.18s ease;
         }
 
         .feature-card:hover {
-          transform: translateY(-2px);
-          box-shadow: 0 16px 34px rgba(15, 23, 42, 0.08);
+          transform: translateY(-3px);
+          box-shadow: 0 10px 24px rgba(59, 130, 246, 0.1);
         }
 
         .feature-card h3 {
           margin: 0 0 0.35rem;
           font-size: 1rem;
-          color: #0f172a;
+          color: #1E293B;
         }
 
         .feature-card p {
           margin: 0;
-          color: #64748b;
+          color: #64748B;
           font-size: 0.9rem;
           line-height: 1.6;
         }
@@ -744,9 +760,9 @@ const PatientDashboard = () => {
         .table-wrap {
           width: 100%;
           overflow-x: auto;
-          border-radius: 20px;
-          border: 1px solid #e2e8f0;
-          background: #ffffff;
+          border-radius: 16px;
+          border: 1px solid #E2E8F0;
+          background: #FFFFFF;
         }
 
         .data-table {
@@ -757,24 +773,24 @@ const PatientDashboard = () => {
         }
 
         .data-table th {
-          background: #f8fafc;
+          background: #F8FAFC;
           padding: 1rem;
           text-align: left;
           font-weight: 800;
           color: #334155;
-          border-bottom: 1px solid #e2e8f0;
+          border-bottom: 1px solid #E2E8F0;
           white-space: nowrap;
         }
 
         .data-table td {
           padding: 1rem;
-          border-bottom: 1px solid #eef2f7;
-          color: #0f172a;
+          border-bottom: 1px solid #F1F5F9;
+          color: #1E293B;
           vertical-align: top;
         }
 
         .data-table tr:hover td {
-          background: #f8fbff;
+          background: #EFF6FF;
         }
 
         .status-badge {
@@ -804,8 +820,8 @@ const PatientDashboard = () => {
         }
 
         .icon-btn {
-          background: #eef2f7;
-          border: 1px solid #dbe2ea;
+          background: #F1F5F9;
+          border: 1px solid #CBD5E1;
           width: 2.4rem;
           height: 2.4rem;
           border-radius: 12px;
@@ -818,31 +834,31 @@ const PatientDashboard = () => {
         }
 
         .icon-btn:hover {
-          transform: translateY(-1px);
-          background: #e2e8f0;
-          box-shadow: 0 10px 18px rgba(15, 23, 42, 0.08);
+          transform: translateY(-2px);
+          background: #E2E8F0;
+          box-shadow: 0 8px 16px rgba(59, 130, 246, 0.1);
         }
 
         .icon-btn.delete {
-          background: #fef2f2;
-          border-color: #fecaca;
-          color: #b91c1c;
+          background: #FEF2F2;
+          border-color: #FECACA;
+          color: #B91C1C;
         }
 
         .icon-btn.delete:hover {
-          background: #fee2e2;
+          background: #FEE2E2;
         }
 
         .loading,
         .empty-state {
           text-align: center;
           padding: 2.75rem 1.5rem;
-          color: #64748b;
+          color: #64748B;
         }
 
         .empty-state h3 {
           margin: 0.9rem 0 0.25rem;
-          color: #0f172a;
+          color: #1E293B;
         }
 
         .empty-state p,
@@ -854,46 +870,46 @@ const PatientDashboard = () => {
         .empty-state-icon {
           width: 78px;
           height: 78px;
-          background: #e2e8f0;
-          border-radius: 22px;
+          background: #E2E8F0;
+          border-radius: 20px;
           display: flex;
           align-items: center;
           justify-content: center;
           margin: 0 auto;
-          color: #64748b;
+          color: #64748B;
           box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
         }
 
         .symptom-textarea {
           width: 100%;
           min-height: 160px;
-          border: 1px solid #cbd5e1;
-          border-radius: 18px;
+          border: 2px solid #E2E8F0;
+          border-radius: 14px;
           padding: 1rem;
           font-size: 1rem;
           font-family: 'Nunito', sans-serif;
           resize: vertical;
           outline: none;
           box-sizing: border-box;
-          background: #f8fafc;
-          color: #0f172a;
+          background: #F8FAFC;
+          color: #1E293B;
           transition: border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
         }
 
         .symptom-textarea:focus {
-          border-color: #2563eb;
-          background: #ffffff;
-          box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+          border-color: #3B82F6;
+          background: #FFFFFF;
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
         }
 
         .ai-response-box {
           margin-top: 1rem;
-          background: #eff6ff;
-          border: 1px solid #bfdbfe;
-          border-radius: 18px;
+          background: #EFF6FF;
+          border: 1px solid #BFDBFE;
+          border-radius: 14px;
           padding: 1rem;
           white-space: pre-wrap;
-          color: #0f172a;
+          color: #1E293B;
         }
 
         .profile-grid {
@@ -920,13 +936,13 @@ const PatientDashboard = () => {
         .profile-avatar {
           width: 56px;
           height: 56px;
-          border-radius: 18px;
-          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+          border-radius: 16px;
+          background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 60%, #93C5FD 100%);
           color: white;
           display: grid;
           place-items: center;
           font-weight: 900;
-          box-shadow: 0 10px 22px rgba(37, 99, 235, 0.18);
+          box-shadow: 0 8px 20px rgba(59, 130, 246, 0.2);
         }
 
         .profile-meta {
@@ -936,7 +952,7 @@ const PatientDashboard = () => {
 
         .profile-meta strong {
           font-size: 1rem;
-          color: #0f172a;
+          color: #1E293B;
         }
 
         .profile-meta span {
@@ -947,12 +963,12 @@ const PatientDashboard = () => {
         .compact-card h3 {
           margin: 0 0 0.35rem;
           font-size: 1rem;
-          color: #0f172a;
+          color: #1E293B;
         }
 
         .compact-card p {
           margin: 0;
-          color: #64748b;
+          color: #64748B;
           font-size: 0.9rem;
           line-height: 1.6;
         }
@@ -1416,7 +1432,33 @@ const PatientDashboard = () => {
                                   {prescription.isActive ? 'Active' : 'Inactive'}
                                 </span>
                               </td>
-                              <td>{formatDate(prescription.validUntil)}</td>
+                              <td>
+                                {(() => {
+                                  // Try validUntil first
+                                  if (prescription.validUntil) {
+                                    const date = new Date(prescription.validUntil);
+                                    if (!isNaN(date.getTime())) {
+                                      return date.toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                      });
+                                    }
+                                  }
+                                  // Fall back to first medication's endDate
+                                  if (prescription.medications?.[0]?.endDate) {
+                                    const date = new Date(prescription.medications[0].endDate);
+                                    if (!isNaN(date.getTime())) {
+                                      return date.toLocaleDateString('en-US', {
+                                        year: 'numeric',
+                                        month: 'short',
+                                        day: 'numeric'
+                                      });
+                                    }
+                                  }
+                                  return 'N/A';
+                                })()}
+                              </td>
                             </tr>
                           ))}
                         </tbody>

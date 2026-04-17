@@ -52,6 +52,7 @@ export interface DoctorSlotsResponse {
 export interface DoctorAppointmentsResponse {
   appointments: Array<{
     _id: string;
+    patientId: string;
     patientName: string;
     date: string;
     time: string;
