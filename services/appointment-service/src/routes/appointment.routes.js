@@ -12,6 +12,7 @@ const {
   cancelPatientAppointment,
   reschedulePatientAppointment,
   cancelDoctorAppointment,
+  acceptDoctorAppointment,
   completeDoctorAppointment,
   updateAppointmentPaymentStatusInternal,
   createMeetingForDoctorAppointment,
@@ -35,6 +36,7 @@ router.get("/me", protect, authorize("patient", "doctor", "admin"), getMyAppoint
 
 router.get("/doctor/me", protect, authorize("doctor"), getMyDoctorAppointments);
 router.patch("/doctor/:appointmentId/meeting", protect, authorize("doctor"), createMeetingForDoctorAppointment);
+router.patch("/doctor/:appointmentId/accept", protect, authorize("doctor"), acceptDoctorAppointment);
 router.patch("/doctor/:appointmentId/cancel", protect, authorize("doctor"), cancelDoctorAppointment);
 router.patch("/doctor/:appointmentId/complete", protect, authorize("doctor"), completeDoctorAppointment);
 router.patch('/doctor/:appointmentId/consultation-complete', protect, authorize('doctor'), completeConsultation);

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Clock, Loader2, RefreshCw, Video, User, FileText, AlertTriangle } from 'lucide-react';
-import { getMeetingAccess, getMyDoctorAppointments } from '../../services/appointmentService';
+import { Calendar, Clock, Loader2, RefreshCw, Video, User, FileText, AlertTriangle, CheckCircle } from 'lucide-react';
+import { acceptDoctorAppointment, getMeetingAccess, getMyDoctorAppointments } from '../../services/appointmentService';
 import { createTelemedicineMeeting } from '../../services/telemedicineService';
 
 type Appointment = {
@@ -11,6 +11,8 @@ type Appointment = {
   time: string;
   type: 'consultation' | 'checkup' | 'followup' | 'emergency';
   status: 'scheduled' | 'confirmed' | 'completed' | 'cancelled';
+  paymentMode?: 'MANUAL' | 'ONLINE';
+  paymentStatus?: string;
   notes?: string;
   isVideoConsultation?: boolean;
   meetingRoomName?: string;
@@ -21,6 +23,7 @@ const DoctorAppointmentsPage = () => {
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(false);
   const [creatingMeetingId, setCreatingMeetingId] = useState('');
+  const [acceptingAppointmentId, setAcceptingAppointmentId] = useState('');
   const [error, setError] = useState('');
   const [doctorName, setDoctorName] = useState('Doctor');
 
@@ -40,7 +43,10 @@ const DoctorAppointmentsPage = () => {
 
     try {
       const response = await getMyDoctorAppointments();
-      setAppointments(response?.appointments || []);
+      setAppointments((response?.appointments || []).map((appointment) => ({
+        ...appointment,
+        status: appointment.status as Appointment['status']
+      })));
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to load appointments');
     } finally {
@@ -92,6 +98,20 @@ const DoctorAppointmentsPage = () => {
     }
   };
 
+  const handleAcceptAppointment = async (appointmentId: string) => {
+    setError('');
+    setAcceptingAppointmentId(appointmentId);
+
+    try {
+      await acceptDoctorAppointment(appointmentId);
+      await fetchAppointments();
+    } catch (err: any) {
+      setError(err.response?.data?.message || err.message || 'Failed to accept appointment');
+    } finally {
+      setAcceptingAppointmentId('');
+    }
+  };
+
   const handleJoinMeeting = async (roomName: string) => {
     try {
       await getMeetingAccess(roomName);
@@ -100,6 +120,9 @@ const DoctorAppointmentsPage = () => {
       setError(err.response?.data?.message || err.message || 'Unable to join meeting');
     }
   };
+
+  const acceptedAppointments = appointments.filter((appointment) => appointment.status === 'confirmed');
+  const pendingAppointments = appointments.filter((appointment) => appointment.status === 'scheduled');
 
   return (
     <div className="space-y-6 font-['Nunito',sans-serif]">
@@ -265,24 +288,17 @@ const DoctorAppointmentsPage = () => {
 
         <div className="panel">
           <div className="flex items-center gap-3 mb-4">
-            <Calendar size={22} className="text-blue-600" />
-            <h3 className="text-xl font-bold text-slate-800 m-0">All Appointments</h3>
+            <CheckCircle size={22} className="text-emerald-600" />
+            <h3 className="text-xl font-bold text-slate-800 m-0">Accepted Appointments</h3>
           </div>
 
-          {loading ? (
-            <div className="py-10 text-center text-slate-500 font-semibold flex items-center justify-center gap-2">
-              <Loader2 size={20} className="animate-spin" />
-              Loading appointments...
-            </div>
-          ) : appointments.length === 0 ? (
-            <div className="py-12 text-center text-slate-500">
-              <FileText size={40} className="mx-auto mb-3 text-slate-300" />
-              <h4 className="text-lg font-bold text-slate-700 mb-1">No appointments found</h4>
-              <p>No appointments have been created for you yet.</p>
+          {acceptedAppointments.length === 0 ? (
+            <div className="py-8 text-center text-slate-500">
+              <p>No accepted appointments yet.</p>
             </div>
           ) : (
-            <div className="grid gap-4">
-              {appointments.map((appointment) => (
+            <div className="grid gap-4 mb-8">
+              {acceptedAppointments.map((appointment) => (
                 <div key={appointment._id} className="appointment-card">
                   <div className="appointment-row">
                     <div>
@@ -291,11 +307,11 @@ const DoctorAppointmentsPage = () => {
                         {appointment.patientName}
                         {appointment.isVideoConsultation ? <Video size={16} className="text-blue-500" /> : null}
                       </h4>
-                      <p className="text-slate-500 m-0">{appointment.notes || 'No notes provided'}</p>
+                      <p className="text-slate-500 m-0">Accepted appointment</p>
                     </div>
 
-                    <span className="badge" style={{ background: getStatusColor(appointment.status) }}>
-                      {appointment.status}
+                    <span className="badge" style={{ background: '#10B981' }}>
+                      Accepted
                     </span>
                   </div>
 
@@ -311,7 +327,7 @@ const DoctorAppointmentsPage = () => {
                       onClick={() => handleCreateMeeting(appointment)}
                       disabled={creatingMeetingId === appointment._id}
                     >
-                      {creatingMeetingId === appointment._id ? 'Creating...' : 'Create Meeting'}
+                      {creatingMeetingId === appointment._id ? 'Creating...' : 'Create Video Call'}
                     </button>
 
                     {appointment.meetingRoomName ? (
@@ -322,6 +338,66 @@ const DoctorAppointmentsPage = () => {
                         Join Meeting
                       </button>
                     ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div className="flex items-center gap-3 mb-4">
+            <Calendar size={22} className="text-blue-600" />
+            <h3 className="text-xl font-bold text-slate-800 m-0">Appointments Waiting for Accept</h3>
+          </div>
+
+          {loading ? (
+            <div className="py-10 text-center text-slate-500 font-semibold flex items-center justify-center gap-2">
+              <Loader2 size={20} className="animate-spin" />
+              Loading appointments...
+            </div>
+          ) : pendingAppointments.length === 0 ? (
+            <div className="py-12 text-center text-slate-500">
+              <FileText size={40} className="mx-auto mb-3 text-slate-300" />
+              <h4 className="text-lg font-bold text-slate-700 mb-1">No pending appointments found</h4>
+              <p>All appointments have already been accepted or closed.</p>
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {pendingAppointments.map((appointment) => (
+                <div key={appointment._id} className="appointment-card">
+                  <div className="appointment-row">
+                    <div>
+                      <h4 className="text-lg font-bold text-slate-800 mb-1 flex items-center gap-2">
+                        <User size={18} className="text-blue-600" />
+                        {appointment.patientName}
+                        {appointment.isVideoConsultation ? <Video size={16} className="text-blue-500" /> : null}
+                      </h4>
+                      <p className="text-slate-500 m-0">{appointment.notes || 'No notes provided'}</p>
+                    </div>
+
+                    <span className="badge" style={{ background: getStatusColor(appointment.status) }}>
+                      {appointment.paymentStatus === 'PENDING' ? 'Waiting for Payment' : appointment.status === 'scheduled' ? 'Pending' : appointment.status}
+                    </span>
+                  </div>
+
+                  <div className="appointment-meta">
+                    <span className="flex items-center gap-2"><Calendar size={16} /> {formatDate(appointment.date)}</span>
+                    <span className="flex items-center gap-2"><Clock size={16} /> {appointment.time}</span>
+                    <span className="flex items-center gap-2">Type: {appointment.type}</span>
+                  </div>
+
+                  <div>
+                    <button
+                      className="meeting-btn join"
+                      onClick={() => handleAcceptAppointment(appointment._id)}
+                      disabled={acceptingAppointmentId === appointment._id || appointment.paymentStatus === 'PENDING'}
+                      style={{ background: '#10B981' }}
+                    >
+                      {appointment.paymentStatus === 'PENDING'
+                        ? 'Waiting for Payment'
+                        : acceptingAppointmentId === appointment._id
+                          ? 'Accepting...'
+                          : 'Accept'}
+                    </button>
                   </div>
                 </div>
               ))}
