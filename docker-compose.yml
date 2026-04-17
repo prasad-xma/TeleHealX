@@ -4,17 +4,8 @@ services:
       context: ./services/api-gateway
     ports:
       - "5000:5000"
-    environment:
-      PORT: 5000
-      AUTH_SERVICE_URL: "http://auth-service:5001"
-      USER_SERVICE_URL: "http://auth-service:5001"
-      PATIENT_SERVICE_URL: "http://patient-service:5015"
-      DOCTOR_SERVICE_URL: "http://doctor-service:5010"
-      AI_SERVICE_URL: "http://ai-service:5004"
-      APPOINTMENT_SERVICE_URL: "http://appointment-service:5007"
-      PAYMENT_SERVICE_URL: "http://payment-service:5006"
-      TELEMEDICINE_SERVICE_URL: "http://telemedicine-service:5005"
-      NOTIFICATION_SERVICE_URL: "http://notification-service:5008"
+    env_file:
+      - ./services/api-gateway/.env
     depends_on:
       - auth-service
       - patient-service
@@ -30,28 +21,24 @@ services:
       context: ./services/auth-service
     ports:
       - "5001:5001"
-    environment:
-      PORT: 5001
-      MONGODB: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
-      JWT_SECRET: "nd2M065UNB0YqAQK557sP1o1XX4bZEDsbonTwjpNkWkjdH36otFoeT6RcEowtXS"
+    env_file:
+      - ./services/auth-service/.env
 
   ai-service:
     build:
       context: ./services/ai-service
     ports:
       - "5004:5004"
-    environment:
-      PORT: 5004
-      MONGODB: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
+    env_file:
+      - ./services/ai-service/.env
 
   telemedicine-service:
     build:
       context: ./services/telemedicine-service
     ports:
       - "5005:5005"
-    environment:
-      PORT: 5005
-      APPOINTMENT_SERVICE_URL: "http://appointment-service:5007"
+    env_file:
+      - ./services/telemedicine-service/.env
 
   payment-service:
     build:
@@ -60,57 +47,38 @@ services:
       - "5006:5006"
     env_file:
       - ./services/payment-service/.env
-    environment:
-      PORT: 5006
-      MONGODB_URI: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
-      APPOINTMENT_SERVICE_URL: "http://appointment-service:5007"
-      INTERNAL_SERVICE_SECRET: "telehealx-secret"
 
   appointment-service:
     build:
       context: ./services/appointment-service
     ports:
       - "5007:5007"
-    environment:
-      PORT: 5007
-      MONGODB_URI: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
-      JWT_SECRET: "nd2M065UNB0YqAQK557sP1o1XX4bZEDsbonTwjpNkWkjdH36otFoeT6RcEowtXS"
-      AUTH_SERVICE_URL: "http://auth-service:5001"
-      PATIENT_SERVICE_URL: "http://patient-service:5015"
-      DOCTOR_SERVICE_URL: "http://doctor-service:5010"
-      PAYMENT_SERVICE_URL: "http://payment-service:5006"
-      NOTIFICATION_SERVICE_URL: "http://notification-service:5008"
-      INTERNAL_SERVICE_SECRET: "telehealx-secret"
+    env_file:
+      - ./services/appointment-service/.env
 
   doctor-service:
     build:
       context: ./services/doctor-service
     ports:
       - "5010:5010"
-    environment:
-      PORT: 5010
-      MONGODB: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
-      PATIENT_SERVICE_URL: "http://patient-service:5015"
-      INTERNAL_API_KEY: "telehealx-secret"
+    env_file:
+      - ./services/doctor-service/.env
 
   patient-service:
     build:
       context: ./services/patient-service
     ports:
       - "5015:5015"
-    environment:
-      PORT: 5015
-      MONGODB: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
-      JWT_SECRET: "nd2M065UNB0YqAQK557sP1o1XX4bZEDsbonTwjpNkWkjdH36otFoeT6RcEowtXS"
+    env_file:
+      - ./services/patient-service/.env
 
   notification-service:
     build:
       context: ./services/notification-service
     ports:
       - "5008:5008"
-    environment:
-      PORT: 5008
-      MONGODB_URI: "mongodb+srv://year3semester2kdy_db_user:fgSHzLPZDgFNFSld@cluster0.fa7keoe.mongodb.net/TeleHealX?appName=Cluster0"
+    env_file:
+      - ./services/notification-service/.env
 
   client:
     build:
