@@ -1,0 +1,927 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: telehealx
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telehealx-config
+  namespace: telehealx
+data:
+  AUTH_SERVICE_URL: http://auth-service:5001
+  USER_SERVICE_URL: http://auth-service:5001
+  PATIENT_SERVICE_URL: http://patient-service:5015
+  DOCTOR_SERVICE_URL: http://doctor-service:5010
+  AI_SERVICE_URL: http://ai-service:5004
+  APPOINTMENT_SERVICE_URL: http://appointment-service:5007
+  PAYMENT_SERVICE_URL: http://payment-service:5006
+  TELEMEDICINE_SERVICE_URL: http://telemedicine-service:5005
+  NOTIFICATION_SERVICE_URL: http://notification-service:5008
+  CLIENT_URL: http://localhost:5173
+  DEFAULT_TIMEZONE: Asia/Colombo
+  NODE_ENV: development
+  CORS_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174
+  USE_MOCK_DOCTOR_SERVICE: "false"
+  USE_MOCK_PATIENT_SERVICE: "false"
+  MAX_RESCHEDULE_COUNT: "2"
+  STRIPE_CURRENCY: usd
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: telehealx-secrets
+  namespace: telehealx
+type: Opaque
+stringData:
+  MONGODB: ${MONGODB_URI_PLACEHOLDER}
+  MONGODB_URI: ${MONGODB_URI_PLACEHOLDER}
+  JWT_SECRET: ${JWT_SECRET_PLACEHOLDER}
+  INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET_PLACEHOLDER}
+  INTERNAL_API_KEY: ${INTERNAL_API_KEY_PLACEHOLDER}
+  GEMINI_API_KEY: ${GEMINI_API_KEY_PLACEHOLDER}
+  STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY_PLACEHOLDER}
+  STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET_PLACEHOLDER}
+  TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID_PLACEHOLDER}
+  TWILIO_API_KEY: ${TWILIO_API_KEY_PLACEHOLDER}
+  TWILIO_API_SECRET: ${TWILIO_API_SECRET_PLACEHOLDER}
+  AUTHTOKEN: ${AUTHTOKEN_PLACEHOLDER}
+  TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN_PLACEHOLDER}
+  TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER_PLACEHOLDER}
+  TWILIO_VERIFIED_TO_NUMBER: ${TWILIO_VERIFIED_TO_NUMBER_PLACEHOLDER}
+  EMAIL_PASS: ${EMAIL_PASS_PLACEHOLDER}
+  EMAIL_USER: ${EMAIL_USER_PLACEHOLDER}
+  FROM_EMAIL: ${FROM_EMAIL_PLACEHOLDER}
+  EMAIL_HOST: ${EMAIL_HOST_PLACEHOLDER}
+  SMS_FORCE_VERIFIED_ONLY: "true"
+  NODE_ENV: development
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: telehealx-api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: telehealx
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 5000
+      targetPort: 5000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: telehealx-auth-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5001
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5001"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: telehealx
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 5001
+      targetPort: 5001
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-service
+  template:
+    metadata:
+      labels:
+        app: ai-service
+    spec:
+      containers:
+        - name: ai-service
+          image: telehealx-ai-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5004
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5004"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service
+  namespace: telehealx
+spec:
+  selector:
+    app: ai-service
+  ports:
+    - port: 5004
+      targetPort: 5004
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telemedicine-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telemedicine-service
+  template:
+    metadata:
+      labels:
+        app: telemedicine-service
+    spec:
+      containers:
+        - name: telemedicine-service
+          image: telehealx-telemedicine-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5005
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5005"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telemedicine-service
+  namespace: telehealx
+spec:
+  selector:
+    app: telemedicine-service
+  ports:
+    - port: 5005
+      targetPort: 5005
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: telehealx-payment-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5006
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5006"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: telehealx
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - port: 5006
+      targetPort: 5006
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appointment-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appointment-service
+  template:
+    metadata:
+      labels:
+        app: appointment-service
+    spec:
+      containers:
+        - name: appointment-service
+          image: telehealx-appointment-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5007
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5007"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: appointment-service
+  namespace: telehealx
+spec:
+  selector:
+    app: appointment-service
+  ports:
+    - port: 5007
+      targetPort: 5007
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: telehealx-notification-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5008
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5008"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: telehealx
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - port: 5008
+      targetPort: 5008
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: patient-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: patient-service
+  template:
+    metadata:
+      labels:
+        app: patient-service
+    spec:
+      containers:
+        - name: patient-service
+          image: telehealx-patient-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5015
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5015"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: patient-service
+  namespace: telehealx
+spec:
+  selector:
+    app: patient-service
+  ports:
+    - port: 5015
+      targetPort: 5015
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doctor-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: doctor-service
+  template:
+    metadata:
+      labels:
+        app: doctor-service
+    spec:
+      containers:
+        - name: doctor-service
+          image: telehealx-doctor-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5010
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5010"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: doctor-service
+  namespace: telehealx
+spec:
+  selector:
+    app: doctor-service
+  ports:
+    - port: 5010
+      targetPort: 5010
+  type: ClusterIP
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: telehealx
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: telehealx-config
+  namespace: telehealx
+data:
+  AUTH_SERVICE_URL: http://auth-service:5001
+  USER_SERVICE_URL: http://auth-service:5001
+  PATIENT_SERVICE_URL: http://patient-service:5015
+  DOCTOR_SERVICE_URL: http://doctor-service:5010
+  AI_SERVICE_URL: http://ai-service:5004
+  APPOINTMENT_SERVICE_URL: http://appointment-service:5007
+  PAYMENT_SERVICE_URL: http://payment-service:5006
+  TELEMEDICINE_SERVICE_URL: http://telemedicine-service:5005
+  NOTIFICATION_SERVICE_URL: http://notification-service:5008
+  CLIENT_URL: http://localhost:5173
+  DEFAULT_TIMEZONE: Asia/Colombo
+  NODE_ENV: development
+  CORS_ORIGINS: http://localhost:3000,http://localhost:5173,http://localhost:5174
+  USE_MOCK_DOCTOR_SERVICE: "false"
+  USE_MOCK_PATIENT_SERVICE: "false"
+  MAX_RESCHEDULE_COUNT: "2"
+  STRIPE_CURRENCY: usd
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: telehealx-secrets
+  namespace: telehealx
+type: Opaque
+stringData:
+  MONGODB: ${MONGODB_URI_PLACEHOLDER}
+  MONGODB_URI: ${MONGODB_URI_PLACEHOLDER}
+  JWT_SECRET: ${JWT_SECRET_PLACEHOLDER}
+  INTERNAL_SERVICE_SECRET: ${INTERNAL_SERVICE_SECRET_PLACEHOLDER}
+  INTERNAL_API_KEY: ${INTERNAL_API_KEY_PLACEHOLDER}
+  GEMINI_API_KEY: ${GEMINI_API_KEY_PLACEHOLDER}
+  STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY_PLACEHOLDER}
+  STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET_PLACEHOLDER}
+  TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID_PLACEHOLDER}
+  TWILIO_API_KEY: ${TWILIO_API_KEY_PLACEHOLDER}
+  TWILIO_API_SECRET: ${TWILIO_API_SECRET_PLACEHOLDER}
+  AUTHTOKEN: ${AUTHTOKEN_PLACEHOLDER}
+  TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN_PLACEHOLDER}
+  TWILIO_PHONE_NUMBER: ${TWILIO_PHONE_NUMBER_PLACEHOLDER}
+  TWILIO_VERIFIED_TO_NUMBER: ${TWILIO_VERIFIED_TO_NUMBER_PLACEHOLDER}
+  EMAIL_PASS: ${EMAIL_PASS_PLACEHOLDER}
+  EMAIL_USER: ${EMAIL_USER_PLACEHOLDER}
+  FROM_EMAIL: ${FROM_EMAIL_PLACEHOLDER}
+  EMAIL_HOST: ${EMAIL_HOST_PLACEHOLDER}
+  SMS_FORCE_VERIFIED_ONLY: "true"
+  NODE_ENV: development
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-gateway
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api-gateway
+  template:
+    metadata:
+      labels:
+        app: api-gateway
+    spec:
+      containers:
+        - name: api-gateway
+          image: telehealx-api-gateway:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-gateway
+  namespace: telehealx
+spec:
+  selector:
+    app: api-gateway
+  ports:
+    - port: 5000
+      targetPort: 5000
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      containers:
+        - name: auth-service
+          image: telehealx-auth-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5001
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5001"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+  namespace: telehealx
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 5001
+      targetPort: 5001
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ai-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ai-service
+  template:
+    metadata:
+      labels:
+        app: ai-service
+    spec:
+      containers:
+        - name: ai-service
+          image: telehealx-ai-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5004
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5004"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ai-service
+  namespace: telehealx
+spec:
+  selector:
+    app: ai-service
+  ports:
+    - port: 5004
+      targetPort: 5004
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telemedicine-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telemedicine-service
+  template:
+    metadata:
+      labels:
+        app: telemedicine-service
+    spec:
+      containers:
+        - name: telemedicine-service
+          image: telehealx-telemedicine-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5005
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5005"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telemedicine-service
+  namespace: telehealx
+spec:
+  selector:
+    app: telemedicine-service
+  ports:
+    - port: 5005
+      targetPort: 5005
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment-service
+  template:
+    metadata:
+      labels:
+        app: payment-service
+    spec:
+      containers:
+        - name: payment-service
+          image: telehealx-payment-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5006
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5006"
+            - name: SERVICE_NAME
+              value: payment-service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-service
+  namespace: telehealx
+spec:
+  selector:
+    app: payment-service
+  ports:
+    - port: 5006
+      targetPort: 5006
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appointment-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appointment-service
+  template:
+    metadata:
+      labels:
+        app: appointment-service
+    spec:
+      containers:
+        - name: appointment-service
+          image: telehealx-appointment-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5007
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5007"
+            - name: SERVICE_NAME
+              value: appointment-service
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: appointment-service
+  namespace: telehealx
+spec:
+  selector:
+    app: appointment-service
+  ports:
+    - port: 5007
+      targetPort: 5007
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: doctor-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: doctor-service
+  template:
+    metadata:
+      labels:
+        app: doctor-service
+    spec:
+      containers:
+        - name: doctor-service
+          image: telehealx-doctor-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5010
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5010"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: doctor-service
+  namespace: telehealx
+spec:
+  selector:
+    app: doctor-service
+  ports:
+    - port: 5010
+      targetPort: 5010
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: patient-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: patient-service
+  template:
+    metadata:
+      labels:
+        app: patient-service
+    spec:
+      containers:
+        - name: patient-service
+          image: telehealx-patient-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5015
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5015"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: patient-service
+  namespace: telehealx
+spec:
+  selector:
+    app: patient-service
+  ports:
+    - port: 5015
+      targetPort: 5015
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-service
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: notification-service
+  template:
+    metadata:
+      labels:
+        app: notification-service
+    spec:
+      containers:
+        - name: notification-service
+          image: telehealx-notification-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5008
+          envFrom:
+            - configMapRef:
+                name: telehealx-config
+            - secretRef:
+                name: telehealx-secrets
+          env:
+            - name: PORT
+              value: "5008"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-service
+  namespace: telehealx
+spec:
+  selector:
+    app: notification-service
+  ports:
+    - port: 5008
+      targetPort: 5008
+  type: ClusterIP
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: client
+  namespace: telehealx
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: client
+  template:
+    metadata:
+      labels:
+        app: client
+    spec:
+      containers:
+        - name: client
+          image: telehealx-client:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: client
+  namespace: telehealx
+spec:
+  selector:
+    app: client
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP
