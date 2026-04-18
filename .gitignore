@@ -37,7 +37,6 @@ temp/
 docker-compose.override.yml
 
 # Kubernetes secrets (never commit actual secrets)
-k8s/secret.yaml
 k8s/sealed-secret.yaml
 
 # OS
@@ -56,5 +55,3 @@ env/
 *.backup
 *.bak
 *.tmp
-
-.env.example

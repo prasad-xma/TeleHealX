@@ -4,5 +4,4 @@ namespace: telehealx
 resources:
   - namespace.yaml
   - configmap.yaml
-  - secret.yaml
   - manifests.yaml
